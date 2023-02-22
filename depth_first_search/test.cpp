@@ -23,7 +23,7 @@ int TEST(std::string Test_name, int expected_result,int i, int j, std::vector<in
 
 int TEST2(std::string Test_name, int expected_result,int i, int j, std::vector<int> instruction,  std::vector<int> pattern, std::vector<std::vector<int> > V){
     printf("%s", Test_name.c_str());
-    if(expected_result == testMove(i,j,instruction,pattern, V)){
+    if(expected_result == moveNoColor(i,j,instruction,pattern, V)){
         printf("\033[32m Test passed\033[0m\n");
         return 1;
     }else{
@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
     std::mt19937 gen(123123);
     std::uniform_real_distribution<double> dis(0, 1);
 
-    std::string path = "./Graph/LineeGraph.txt";
+    std::string path = "./Graph/TestGraph.txt";
 
     //Step 1 build vertex and edge matrix
     auto V = file_reader(path);
