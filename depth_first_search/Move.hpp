@@ -109,9 +109,12 @@ int moveAndColor(int node_i, int node_j, std::vector<int> istruction, int length
         //check if a non correct color replace a correct color
         if((*actualRes)[i][j] == (*mat)[i][j] && pattern[idx_pattern] != (*mat)[i][j]){
             min_to_color -= 1;
-        }else{
-            min_to_color += 1;
         }
+        if((*actualRes)[i][j] != (*mat)[i][j] && pattern[idx_pattern] == (*mat)[i][j]){
+            min_to_color += 1;
+
+        }
+
         (*actualRes)[i][j] = pattern[idx_pattern];
         idx_pattern += 1;
         if(idx_pattern >= pattern.size()){
@@ -134,8 +137,8 @@ int moveAndColor(int node_i, int node_j, std::vector<int> istruction, int length
 
         //check if you can do the move
         if(i >= (*mat).size() || i < 0 || j >= (*mat).size() || j < 0 ){
-            printf("uscito break\n");
-            return -1;
+            //printf("uscito break\n");
+            return -10000;
         }
 
     }

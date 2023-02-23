@@ -182,7 +182,7 @@ void test_color_graph(){
     std::vector<std::vector<int>> pattern = {{3},{4,3},{3},{4,4,3},{3},{3},{4,3,3,3},{3},{3},{3},{3},{4,3},{3},{4,3,3,3},{3,4}};
     std::vector<std::vector<int>> node_coord = {{2, 0},{3,0}, {0,3},{0,2},{3,1},{3,5},{3,0},{4,3},{4,3},{2,5},{2,1},{3,0},{2,0},{0,2},{0,3}};
     std::vector<int> length_inst = {6,4,6,4,3,4,1,1,1,1,1,5,6,6,5};
-    std::vector<int> resultCheck = {6,4,6,4,3,4,4,5,5,5,5,5,6,6,5};
+    std::vector<int> resultCheck = {6,4,6,4,3,3,4,5,5,5,5,5,6,6,5};
     int index = 0;
 
     for (const auto& file : std::__fs::filesystem::directory_iterator("./Graph/TEST")) {
@@ -231,6 +231,7 @@ void test_color_graph(){
                 printf("\033[32m passed correct_print\033[0m\n");
             }else{
                 printf("\033[31m failed correct_print %d instead %d\033[0m\n", res_int, resultCheck[index]);
+                printArray(tmp_res);
             }
 
             if(index == 1000){
@@ -263,7 +264,7 @@ void test_color_all_graph(){
     std::vector<std::vector<int>> start_move = {{3,0},{2,0},{0,2},{0,3}};
     std::vector<std::vector<int>> pattern_move = {{4,3},{3},{4,4,3},{3}};
     
-    std::vector<int> expected_res = {6,6,6,6};
+    std::vector<int> expected_res = {6,6,4,4};
 
 
     int idx = 0;
@@ -294,6 +295,63 @@ void test_color_all_graph(){
 
 }
 
+
+void test_color_all_graph_sovrapposition(){
+    std::string path = "./Graph/TestGraph.txt";
+    auto V = file_reader_test(path);
+    int n = V.size();
+
+    std::vector<std::vector<int>> voidMat(n, std::vector<int> (n, 0));
+    for(int i = 0; i < n; ++i){
+        for(int j = 0; j < n; ++j){
+            if(V[i][j] < 0){
+                voidMat[i][j] = V[i][j];
+            }
+        }
+    }
+
+    std::vector<std::string> comand_move = {"orizontal","orizontal","orizontal","orizontal","vertical","vertical","vertical"};
+    std::vector<int> length_move = {n,n,n,n,3,n,n};
+    std::vector<std::vector<int>> start_move = {{3,0},{2,0},{2,0},{2,0},{0,2},{0,2},{0,3}};
+    std::vector<std::vector<int>> pattern_move = {{4,3},{4},{3},{4},{4,4,3},{4,4,3},{3}};
+    
+    std::vector<int> expected_res = {6,0,6,-6,2,2,4};
+
+
+    int idx = 0;
+    while(idx < comand_move.size()){
+        auto tmp_voidMat = voidMat;
+        int res_int = moveAndColor(start_move[idx][0], start_move[idx][1], GET_INSTRUCTION[comand_move[idx]],  length_move[idx], pattern_move[idx], &V, &tmp_voidMat);
+        if(res_int> 0){
+            voidMat = tmp_voidMat;
+
+        }
+        if(expected_res[idx] == res_int){
+                printf("\033[32m correct new colored\033[0m\n");
+            }else{
+                printf("\033[31m failed  new colored expected %d, get %d\033[0m\n",expected_res[idx],res_int);
+        }
+        idx += 1;
+    }
+    bool flag = true;
+    for (size_t i = 0; i < V.size(); ++i) {
+        for (size_t j = 0; j < V[0].size(); ++j) {
+            if (V[i][j] != voidMat[i][j]) {
+                flag = false;
+            }
+        }
+    }
+
+    if(flag){
+         printf("\033[32m pass program test \033[0m\n");
+    }else{
+         printf("\033[31m fail program test \033[0m\n");
+         printArray(voidMat);
+    }
+
+
+}
+
 int main(int argc, char *argv[])
 {   
     std::mt19937 gen(123123);
@@ -303,4 +361,5 @@ int main(int argc, char *argv[])
     test_color_graph();
     printf("\n\n");
     test_color_all_graph();
+    test_color_all_graph_sovrapposition();
 }

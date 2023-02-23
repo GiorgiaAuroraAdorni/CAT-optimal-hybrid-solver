@@ -4,6 +4,7 @@
 #include <random>
 #include <vector>
 #include <sstream>
+#include <unordered_map>
 
 
 #include "./file_reader.hpp"
@@ -60,13 +61,73 @@ int optimalSol(int n, std::vector<std::vector<int>> V, int non_colored_point, in
 }
 */
 
+
+std::unordered_map<std::string, std::vector<int>> GET_INSTRUCTION = {
+        {"orizontal", {0,0,1}},
+        {"vertical", {0,1,0}},
+        {"diagonal-U-R", {0,-1,1}},
+        {"diagonal-U-L", {0,-1,-1}},
+        {"square", {2,0,1,-1,0,0,-1}},
+        {"L-UP-R", {2,-1,0,-1,0,0,-1,0,-1}},
+        {"L-UP-L", {2,-1,0,-1,0,0,1,0,1}},
+        {"L-R-UP", {2,0,-1,0,-1,-1,0,-1,0}},
+        {"L-L-UP", {2,0,1,0,1,-1,0,-1,0}},
+        {"ZigZag-Oriz-UP-DOW", {0,-1,1,1,1}},
+        {"ZigZag-Oriz-DOW-UP", {0,1,1,-1,1}},
+        {"ZigZag-Vert-R-L", {1,1,1,1,-1}},
+        {"ZigZag-Vert-L-R", {1,1,-1,1,1}}
+};
+
+
+//std::vector<std::vector<int>> istructions = {{0,0,1},{0,0,1},{0,1,0},{0,1,0},{0,-1,1},{0,-1,-1},{2,0,1,-1,0,0,-1},{2,-1,0,-1,0,0,-1,0,-1},{2,-1,0,-1,0,0,1,0,1}, {2,0,-1,0,-1,-1,0,-1,0},{2,0,1,0,1,-1,0,-1,0},{0,-1,1,1,1},{0,1,1,-1,1},{1,1,1,1,-1},{1,1,-1,1,1}};
+std::vector<std::vector<int>> istructions = {{0,0,1},{0,0,1},{0,1,0},{0,1,0}};
+std::vector<std::vector<int>> patterns = {{3},{4,3},{4,4,3},{4,3,3,3},{3,4}};;
+
+int dfs_algo(std::vector<std::vector<int>> Final, std::vector<std::vector<int>> actual, int total_colored, int total_move,std::vector<std::string> program){
+    int n = Final.size();
+    if(total_colored == n*n){
+        printf("tot move = %d\n", total_move);
+        return total_move;
+    }else{
+        int min = INFINITY;
+        for(int i = 0; i < n; ++i){
+            for(int j = 0; j < n; ++j){
+                //no colored node
+                if(actual[i][j] == 0){
+                    for(int m = 0; m < istructions.size(); ++m){
+                        for(int p = 0; p < patterns.size(); ++p){
+                            auto actual_mov = istructions[m];
+                            auto actual_pat = patterns[p];
+                            //run instruction only if the starting color is correct
+                            if(actual_pat[0] == Final[i][j]){
+                                int length_move = 1;
+                                int flag = 0;
+                                //color with pattern and move finche si puo
+                                while(flag != -10000){
+                                    auto copy_actual = actual;
+                                    flag = moveAndColor(i,j,actual_mov,length_move,actual_pat,&Final, &copy_actual);
+                                    if(flag > 0){
+                                        auto copy_prog = program;
+                                        copy_prog.push_back("tmp");
+                                        int tmp_value = dfs_algo(Final, copy_actual,(total_colored+flag),(total_move+1),copy_prog);
+                                        if(min > tmp_value){
+                                            min = tmp_value;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return min;
+    }
+}
+
 int main(int argc, char *argv[])
 {   
-    std::mt19937 gen(123123);
-    std::uniform_real_distribution<double> dis(0, 1);
-
-    std::string path = "./Graph/LineeGraph.txt";
-
+    std::string path = "./Graph/TestGraph.txt";
     auto V = file_reader(path);
     int n = V.size();
 
@@ -78,10 +139,7 @@ int main(int argc, char *argv[])
             }
         }
     }
-
-    std::vector<std::vector<int>> istructions = {{0,0,1}, {0,1,0},{0,-1,1},{0,-1,-1},{2,0,1,-1,0,0,-1},{2,-1,0,-1,0,0,-1,0,-1},{2,-1,0,-1,0,0,1,0,1},{2,0,1,0,1,1,0,1,0},{2,0,-1,0,-1,1,0,1,0},{1,-1,1,1,1},{1,1,1,-1,1},{1,1,1,1,-1},{1,1,-1,1,1}};
-    std::vector<std::vector<int>> pattern = {{1},{2},{3},{4},{1,2},{1,3},{1,4},{2,1},{2,3},{2,4},{3,1},{3,2},{3,4},{4,1},{4,2},{4,3}};
-   
-
-
+    std::vector<std::string> program = {};
+    int res = dfs_algo(V, voidMat,0,0,program);
+    printf("res = %d\n",res);
 }
