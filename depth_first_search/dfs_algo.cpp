@@ -82,48 +82,29 @@ std::unordered_map<std::string, std::vector<int>> GET_INSTRUCTION = {
 //std::vector<std::vector<int>> istructions = {{0,0,1},{0,0,1},{0,1,0},{0,1,0},{0,-1,1},{0,-1,-1},{2,0,1,-1,0,0,-1},{2,-1,0,-1,0,0,-1,0,-1},{2,-1,0,-1,0,0,1,0,1}, {2,0,-1,0,-1,-1,0,-1,0},{2,0,1,0,1,-1,0,-1,0},{0,-1,1,1,1},{0,1,1,-1,1},{1,1,1,1,-1},{1,1,-1,1,1}};
 std::vector<std::vector<int>> istructions = {{0,0,1},{0,0,1},{0,1,0},{0,1,0}};
 std::vector<std::vector<int>> patterns = {{3},{4,3},{4,4,3},{4,3,3,3},{3,4}};;
-
-int dfs_algo(std::vector<std::vector<int>> Final, std::vector<std::vector<int>> actual, int total_colored, int total_move,std::vector<std::string> program){
-    int n = Final.size();
-    if(total_colored == n*n){
-        printf("tot move = %d\n", total_move);
-        return total_move;
+int dfs_algo(int id, std::vector<int> & memory, int n, int m, std::vector<std::vector<int>> current_state, std::vector<std::vector<int>> * end_solution){
+    if(memory[id] != -1){
+        return memory[id];
     }else{
         int min = INFINITY;
-        for(int i = 0; i < n; ++i){
-            for(int j = 0; j < n; ++j){
-                //no colored node
-                if(actual[i][j] == 0){
-                    for(int m = 0; m < istructions.size(); ++m){
-                        for(int p = 0; p < patterns.size(); ++p){
-                            auto actual_mov = istructions[m];
-                            auto actual_pat = patterns[p];
-                            //run instruction only if the starting color is correct
-                            if(actual_pat[0] == Final[i][j]){
-                                int length_move = 1;
-                                int flag = 0;
-                                //color with pattern and move finche si puo
-                                while(flag != -10000){
-                                    auto copy_actual = actual;
-                                    flag = moveAndColor(i,j,actual_mov,length_move,actual_pat,&Final, &copy_actual);
-                                    if(flag > 0){
-                                        auto copy_prog = program;
-                                        copy_prog.push_back("tmp");
-                                        int tmp_value = dfs_algo(Final, copy_actual,(total_colored+flag),(total_move+1),copy_prog);
-                                        if(min > tmp_value){
-                                            min = tmp_value;
-                                        }
-                                    }
-                                }
-                            }
-                        }
+        //Todo avere una lista o qualcosa per sfoltire le mosse e pattern
+        for (const auto& instruction : istructions) {
+           for(int i = 1; i < current_state.size(); ++i){
+                for(const auto & pattern : patterns){
+                    int new_id = moveFinal(id, n,m,instruction, i, pattern, end_solution, &current_state);
+                    if(new_id > 0){
+                        int a = dfs_algo(new_id, memory, n,m,current_state,end_solution);
+                        min = std::min(min, new_id);
                     }
                 }
-            }
+           }
+
         }
+        memory[id] = min;
         return min;
     }
 }
+
 
 int main(int argc, char *argv[])
 {   
@@ -140,6 +121,6 @@ int main(int argc, char *argv[])
         }
     }
     std::vector<std::string> program = {};
-    int res = dfs_algo(V, voidMat,0,0,program);
+    //int res = dfs_algo(V, voidMat,0,0,program);
     printf("res = %d\n",res);
 }
