@@ -5,6 +5,8 @@
 #include <vector>
 #include <sstream>
 #include <unordered_map>
+#include <cmath>
+#include <limits>
 
 
 #include "./file_reader.hpp"
@@ -82,25 +84,31 @@ std::unordered_map<std::string, std::vector<int>> GET_INSTRUCTION = {
 //std::vector<std::vector<int>> istructions = {{0,0,1},{0,0,1},{0,1,0},{0,1,0},{0,-1,1},{0,-1,-1},{2,0,1,-1,0,0,-1},{2,-1,0,-1,0,0,-1,0,-1},{2,-1,0,-1,0,0,1,0,1}, {2,0,-1,0,-1,-1,0,-1,0},{2,0,1,0,1,-1,0,-1,0},{0,-1,1,1,1},{0,1,1,-1,1},{1,1,1,1,-1},{1,1,-1,1,1}};
 std::vector<std::vector<int>> istructions = {{0,0,1},{0,0,1},{0,1,0},{0,1,0}};
 std::vector<std::vector<int>> patterns = {{3},{4,3},{4,4,3},{4,3,3,3},{3,4}};;
-int dfs_algo(int id, std::vector<int> & memory, int n, int m, std::vector<std::vector<int>> current_state, std::vector<std::vector<int>> * end_solution){
+int dfs_algo(int id, std::vector<int> & memory, int n, int m, std::vector<std::vector<int>> current_state, std::vector<std::vector<int>> * end_solution, int n_iter){
     if(memory[id] != -1){
         return memory[id];
     }else{
         int min = INFINITY;
         //Todo avere una lista o qualcosa per sfoltire le mosse e pattern
-        for (const auto& instruction : istructions) {
-           for(int i = 1; i < current_state.size(); ++i){
+        for (const auto & instruction : istructions) {
+            for(int len = 1; len <= 6; ++len){
                 for(const auto & pattern : patterns){
-                    int new_id = moveFinal(id, n,m,instruction, i, pattern, end_solution, &current_state);
-                    if(new_id > 0){
-                        int a = dfs_algo(new_id, memory, n,m,current_state,end_solution);
-                        min = std::min(min, new_id);
+                    for(int i = 0; i < n; ++i){
+                        for(int j = 0; j < m; ++j){
+                            if(current_state[i][j] == 0){
+                                auto new_current_state = current_state;
+                                int new_id = moveFinal( id, i,  j,instruction,  len,  pattern, end_solution, &new_current_state);
+                                if(new_id > 0){
+                                    int a = dfs_algo(id, memory, n,m,current_state,end_solution,(n_iter+1));
+                                    min = std::min(min, new_id);
+                                }
+                            }
+                        }
                     }
                 }
-           }
-
+            }
         }
-        memory[id] = min;
+        memory[id] = (n_iter+1);
         return min;
     }
 }
@@ -120,7 +128,12 @@ int main(int argc, char *argv[])
             }
         }
     }
-    std::vector<std::string> program = {};
-    //int res = dfs_algo(V, voidMat,0,0,program);
+
+    std::cout << "Maximum vector size: " << std::numeric_limits<std::size_t>::max() << std::endl;
+    
+    
+    int size = std::pow(2, std::pow(n, 2)); 
+    std::vector<int> memory(size, -1);
+    int res = dfs_algo(0, memory,  n,  n, voidMat, &V, 0);
     printf("res = %d\n",res);
 }

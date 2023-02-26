@@ -213,7 +213,7 @@ int moveFinal(int id, int node_i, int node_j, std::vector<int> istruction, int l
         }
 
         //check if you can do the move
-        if(i >= (*mat).size() || i < 0 || j >= (*mat).size() || j < 0 ){
+        if((*mat)[i][j] == -1 || i >= (*mat).size() || i < 0 || j >= (*mat).size() || j < 0 ){
             return -10000;
         }
 
