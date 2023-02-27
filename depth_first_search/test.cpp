@@ -10,7 +10,7 @@
 
 
 #include "./file_reader.hpp"
-#include "./Move.hpp"
+#include "./Move_tmp.hpp"
 
 
 std::unordered_map<std::string, std::vector<int>> GET_INSTRUCTION = {
@@ -352,14 +352,173 @@ void test_color_all_graph_sovrapposition(){
 
 }
 
+
+
+
+
+void test_color_all_graph_final(){
+
+    std::string path = "./Graph/TestGraph.txt";
+    auto V = file_reader(path);
+    int n = V.size();
+    std::vector<int> map_value(std::pow(n, 2), -1);
+    int total_colored = 0;
+    int tmp_iter_val = 0;
+
+    std::vector<std::vector<int>> voidMat(n, std::vector<int> (n, 0));
+    for(int i = 0; i < n; ++i){
+        for(int j = 0; j < n; ++j){
+            if(V[i][j] < 0){
+                voidMat[i][j] = V[i][j];
+            }else{
+                total_colored += 1;
+                int tmp_idx = i*n+j;
+                map_value[tmp_idx] = tmp_iter_val;
+                tmp_iter_val += 1;
+            }
+        }
+    }
+    int size = std::pow(2, total_colored); 
+    std::vector<int> memory(size, -1);
+
+    std::vector<std::string> comand_move = {"orizontal","orizontal","orizontal","orizontal","vertical","vertical","vertical"};
+    std::vector<int> length_move = {n,n,n,n,3,n,n};
+    std::vector<std::vector<int>> start_move = {{3,0},{2,0},{2,0},{2,0},{0,2},{0,2},{0,3}};
+    std::vector<std::vector<int>> pattern_move = {{4,3},{4},{3},{4},{4,4,3},{4,4,3},{3}};
+    int id = 0;
+    int skadj =(std::pow(2, 10)+std::pow(2, 11)+std::pow(2, 12)+std::pow(2, 13)+std::pow(2, 14)+std::pow(2, 15));
+    int secondRo =(std::pow(2, 4)+std::pow(2, 5)+std::pow(2, 6)+std::pow(2, 7)+std::pow(2, 8)+std::pow(2, 9));
+    int firstVert =(std::pow(2, 0)+std::pow(2, 2));
+    int firstVert_2 =(std::pow(2, 16)+std::pow(2, 18));
+    int secondVert = (std::pow(2, 1)+std::pow(2, 3)+std::pow(2, 17)+std::pow(2, 19));
+    printf("expected %d, get %f\n\n",skadj, (std::pow(2,map_value[3*n+0])+std::pow(2,map_value[3*n+1])+std::pow(2,map_value[3*n+2])+std::pow(2,map_value[3*n+3])+std::pow(2,map_value[3*n+4])+std::pow(2,map_value[3*n+5])));
+    std::vector<int> expected_res = {skadj,-10000,(skadj+secondRo),-10000,(skadj+secondRo+firstVert),(skadj+secondRo+firstVert+firstVert_2),(skadj+secondRo+firstVert+secondVert+firstVert_2)};
+    int idx = 0;
+    //comand_move.size()
+    while(idx < comand_move.size()){
+        auto tmp_voidMat = voidMat;
+        int res_int = moveFinal_2(id, start_move[idx][0], start_move[idx][1], GET_INSTRUCTION[comand_move[idx]],  length_move[idx], pattern_move[idx], &V, &tmp_voidMat,map_value);
+        if(res_int> 0){
+            id = res_int;
+            voidMat = tmp_voidMat;
+
+        }
+        if(expected_res[idx] == res_int){
+                printf("\033[32m correct new colored\033[0m\n");
+            }else{
+                printf("\033[31m failed  new colored expected %d, get %d\033[0m\n",expected_res[idx],res_int);
+        }
+        idx += 1;
+    }
+    bool flag = true;
+    for (size_t i = 0; i < V.size(); ++i) {
+        for (size_t j = 0; j < V[0].size(); ++j) {
+            if (V[i][j] != voidMat[i][j]) {
+                flag = false;
+            }
+        }
+    }
+    printArray(voidMat);
+
+    if(flag){
+         printf("\033[32m pass program test \033[0m\n");
+    }else{
+         printf("\033[31m fail program test \033[0m\n");
+    }
+    printf("id = %d\n",id);
+
+
+
+}
+
+
+
+void test_color_all_graph_final_2(){
+
+    std::string path = "./Graph/TestGraph.txt";
+    auto V = file_reader(path);
+    int n = V.size();
+    std::vector<int> map_value(std::pow(n, 2), -1);
+    int total_colored = 0;
+    int tmp_iter_val = 0;
+
+    std::vector<std::vector<int>> voidMat(n, std::vector<int> (n, 0));
+    for(int i = 0; i < n; ++i){
+        for(int j = 0; j < n; ++j){
+            if(V[i][j] < 0){
+                voidMat[i][j] = V[i][j];
+            }else{
+                total_colored += 1;
+                int tmp_idx = i*n+j;
+                map_value[tmp_idx] = tmp_iter_val;
+                tmp_iter_val += 1;
+            }
+        }
+    }
+    int size = std::pow(2, total_colored); 
+    std::vector<int> memory(size, -1);
+
+    std::vector<std::string> comand_move = {"orizontal","orizontal","orizontal","orizontal","orizontal","vertical","vertical","vertical"};
+    std::vector<int> length_move = {n,n,n,n,n,3,n,n};
+    std::vector<std::vector<int>> start_move = {{3,0},{3,0},{2,0},{2,0},{2,0},{0,2},{0,2},{0,3}};
+    std::vector<std::vector<int>> pattern_move = {{4},{4,3},{4},{3},{4},{4,4,3},{4,4,3},{3}};
+    int id = 0;
+    int skadj =(std::pow(2, 10)+std::pow(2, 11)+std::pow(2, 12)+std::pow(2, 13)+std::pow(2, 14)+std::pow(2, 15));
+    int secondRo =(std::pow(2, 4)+std::pow(2, 5)+std::pow(2, 6)+std::pow(2, 7)+std::pow(2, 8)+std::pow(2, 9));
+    int firstVert =(std::pow(2, 0)+std::pow(2, 2));
+    int firstVert_2 =(std::pow(2, 16)+std::pow(2, 18));
+    int secondVert = (std::pow(2, 1)+std::pow(2, 3)+std::pow(2, 17)+std::pow(2, 19));
+    printf("expected %d, get %f\n\n",skadj, (std::pow(2,map_value[3*n+0])+std::pow(2,map_value[3*n+1])+std::pow(2,map_value[3*n+2])+std::pow(2,map_value[3*n+3])+std::pow(2,map_value[3*n+4])+std::pow(2,map_value[3*n+5])));
+    std::vector<int> expected_res = {12121,skadj,-10000,(skadj+secondRo),-10000,(skadj+secondRo+firstVert),(skadj+secondRo+firstVert+firstVert_2),(skadj+secondRo+firstVert+secondVert+firstVert_2)};
+    int idx = 0;
+    //comand_move.size()
+    while(idx < 1){
+        auto tmp_voidMat = voidMat;
+        int res_int = moveFinal_2(id, start_move[idx][0], start_move[idx][1], GET_INSTRUCTION[comand_move[idx]],  length_move[idx], pattern_move[idx], &V, &tmp_voidMat,map_value);
+        if(res_int> 0){
+            id = res_int;
+            voidMat = tmp_voidMat;
+
+        }
+        if(expected_res[idx] == res_int){
+                printf("\033[32m correct new colored\033[0m\n");
+            }else{
+                printf("\033[31m failed  new colored expected %d, get %d\033[0m\n",expected_res[idx],res_int);
+        }
+        idx += 1;
+    }
+    bool flag = true;
+    for (size_t i = 0; i < V.size(); ++i) {
+        for (size_t j = 0; j < V[0].size(); ++j) {
+            if (V[i][j] != voidMat[i][j]) {
+                flag = false;
+            }
+        }
+    }
+    printArray(voidMat);
+
+    if(flag){
+         printf("\033[32m pass program test \033[0m\n");
+    }else{
+         printf("\033[31m fail program test \033[0m\n");
+    }
+    printf("id = %d\n",id);
+
+
+
+}
+
 int main(int argc, char *argv[])
 {   
     std::mt19937 gen(123123);
     std::uniform_real_distribution<double> dis(0, 1);
-
+/*
     test_try_possibility_color();
     test_color_graph();
     printf("\n\n");
     test_color_all_graph();
-    test_color_all_graph_sovrapposition();
+    test_color_all_graph_sovrapposition();*/
+
+    //test_color_all_graph_final();
+    test_color_all_graph_final_2();
 }
