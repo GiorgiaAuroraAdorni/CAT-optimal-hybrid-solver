@@ -31,39 +31,6 @@ void printArray( std::vector<std::vector<int>> mat){
 }
 
 
-/*
-
-int optimalSol(int n, std::vector<std::vector<int>> V, int non_colored_point, int total_point, int total_move, std::vector<std::vector<int>> actualColor, std::vector<std::vector<int>> array_of_instruction,std::vector<std::vector<int>> array_of_pattern ){
-    if(non_colored_point == 0){
-        return total_move;
-    }else{
-        int min = INFINITY;
-        for(int i = 0; i < n; ++i){
-            for(int j = 0; j < n; ++j){
-                for(int k = 0; k < array_of_instruction.size(); ++k){
-                    for(int l = 0; l < array_of_pattern.size(); ++l){
-                        auto newPath = ComplexmoveWithColor(i,j,array_of_instruction[k],array_of_pattern[l], V,actualColor);
-                        for(int m = 0; m < newPath.size(); ++m){
-                            auto newColoredSol = newPath[m];
-                            int non_colored_point_tmp = countNonColored(newColoredSol);
-                            int tmp = optimalSol(n,V,non_colored_point_tmp,total_point,(total_move+1),newColoredSol,array_of_instruction,array_of_pattern);
-                            if(total_move < 8){
-                                printf("%d\n",(total_move+1));
-                            }
-                            if(min < tmp){
-                                min = tmp;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return min;
-    }
-}
-*/
-
-
 std::unordered_map<std::string, std::vector<int>> GET_INSTRUCTION = {
         {"orizontal", {0,0,1}},
         {"vertical", {0,1,0}},
@@ -81,18 +48,15 @@ std::unordered_map<std::string, std::vector<int>> GET_INSTRUCTION = {
 };
 
 //std::vector<std::vector<int>> istructions = {{0,0,1},{0,0,1},{0,1,0},{0,1,0},{0,-1,1},{0,-1,-1},{2,0,1,-1,0,0,-1},{2,-1,0,-1,0,0,-1,0,-1},{2,-1,0,-1,0,0,1,0,1}, {2,0,-1,0,-1,-1,0,-1,0},{2,0,1,0,1,-1,0,-1,0},{0,-1,1,1,1},{0,1,1,-1,1},{1,1,1,1,-1},{1,1,-1,1,1}};
-std::vector<std::vector<int>> istructions = {{0,0,1},{0,0,1},{0,1,0},{0,1,0}};
+std::vector<std::vector<int>> istructions = {{0,0,1},{0,1,0}};
 std::vector<std::vector<int>> patterns = {{4},{3},{4,3},{4,4,3},{4,3,3,3},{3,4}};
 
-int skldahsd = 0;
 int dfs_algo(int id, std::vector<int> & memory, int n, int m, std::vector<std::vector<int>> & current_state, std::vector<std::vector<int>> * end_solution, int n_iter, std::vector<int> & value_index){
-    skldahsd += 1;
-    printf("\n%d\n",skldahsd);
     if(memory[id] != -1){
-        int sfdas = memory[id];
+        printf("\n content memory id = %d AND id = %d \n",memory[id], id);
         return memory[id];
     }else{
-        int min = INFINITY;
+        int min_value = INFINITY;
         //Todo avere una lista o qualcosa per sfoltire le mosse e pattern
         for (const auto & instruction : istructions) {
             for(int len = n; len >= 1; --len){
@@ -103,21 +67,8 @@ int dfs_algo(int id, std::vector<int> & memory, int n, int m, std::vector<std::v
                                 auto new_current_state = current_state;
                                 int new_id = moveFinal_2(id, i,  j,instruction,  len,  pattern, end_solution, &new_current_state,value_index);
                                 if(new_id > 0){
-                                    /*
-                                     printf("_____ START______\n");
-                                     for(int r =0; r < instruction.size(); ++ r){
-                                            printf("%d ", instruction[r]);
-                                    }
-                                    printf("\n len inst %d\n new id = %d\n", len,new_id);
-                                    for(int r = 0; r < pattern.size(); ++r){
-                                        printf("%d ", pattern[r]);
-                                    }
-                                    printf(" \n");
-                                    printArray(new_current_state);
-                                    printf("\n\n\n");
-                                    */
                                     int a = dfs_algo(new_id, memory, n,m,new_current_state,end_solution,(n_iter+1),value_index);                                
-                                    min = std::min(min, new_id);
+                                    min_value = std::min(min_value, (1+a));
                                 }
                             }
                         }
@@ -126,8 +77,150 @@ int dfs_algo(int id, std::vector<int> & memory, int n, int m, std::vector<std::v
             }
         }
         int sfdas = memory[id];
-        memory[id] = min;//(n_iter+1);
-        return min;
+        memory[id] = min_value;
+        return min_value;
+    }
+}
+
+int dfs_algo_2( std::vector<std::vector<int>> & node_sol, std::vector<std::string> & move_sol, std::vector<std::vector<int>> & pattern_sol,std::vector<int> & len_move_sol , int id, std::vector<int> & memory, int n, int m, std::vector<std::vector<int>> & current_state, std::vector<std::vector<int>> * end_solution, int n_iter, std::vector<int> & value_index){
+    if(memory[id] != -1){
+        //printf("\n content memory id = %d AND id = %d \n",memory[id], id);
+        return memory[id];
+    }else{
+        int min_value = INT16_MAX;
+        /*
+        auto best_move_sol = move_sol;
+        auto best_pattern_sol = pattern_sol;
+        auto best_len_move_sol = len_move_sol;
+        */
+        //Todo avere una lista o qualcosa per sfoltire le mosse e pattern
+        for (const auto & instruction : istructions) {
+            for(int len = n; len >= 1; --len){
+                for(const auto & pattern : patterns){
+                    for(int i = 0; i < n; ++i){
+                        for(int j = 0; j < m; ++j){
+                            if(current_state[i][j] == 0){
+                                auto new_current_state = current_state;
+                                auto new_node_sol = node_sol;
+                                new_node_sol.push_back({i,j});
+                                auto new_move_sol = move_sol;
+                                if(instruction[1] == 1){
+                                    new_move_sol.push_back("vertical");
+                                }else{
+                                    new_move_sol.push_back("orizontal");
+                                }
+                                auto new_pattern_sol = pattern_sol;
+                                new_pattern_sol.push_back(pattern);
+                                auto new_len_move_sol = len_move_sol;
+                                new_len_move_sol.push_back(len);
+                                int new_id = moveFinal_2(id, i,  j,instruction,  len,  pattern, end_solution, &new_current_state,value_index);
+                                if(new_id > 0){
+                                    int a = dfs_algo_2(new_node_sol,new_move_sol,new_pattern_sol,new_len_move_sol, new_id, memory, n,m,new_current_state,end_solution,(n_iter+1),value_index); 
+                                    /*
+                                    printArray(new_current_state);
+                                    for(int sol_idx = 0;sol_idx < new_move_sol.size(); ++sol_idx){
+                                        printf("instruction = %s, len_inst = %d, start node = {%d, %d}, pattern ={",new_move_sol[sol_idx].c_str(), new_len_move_sol[sol_idx],new_node_sol[sol_idx][0],new_node_sol[sol_idx][1]);
+                                        for(int patt_l = 0; patt_l < new_pattern_sol[sol_idx].size();++patt_l){
+                                            printf(" %d",new_pattern_sol[sol_idx][patt_l]);
+                                        }
+                                        printf("}     TOTAL MOVE = %d\n", 1+a);
+                                    }  */                          
+                                    min_value = std::min(min_value, (1+a));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        int sfdas = memory[id];
+        memory[id] = min_value;
+        return min_value;
+    }
+}
+
+
+std::vector<std::vector<int>> istructions_2 = {{0,0,1}};
+std::vector<std::vector<int>> patterns_2 = {{4},{3}};
+int flag_deb = 0;
+int dfs_algo_deb( std::vector<std::vector<int>> & node_sol, std::vector<std::string> & move_sol, std::vector<std::vector<int>> & pattern_sol,std::vector<int> & len_move_sol , int id, std::vector<int> & memory, int n, int m, std::vector<std::vector<int>> & current_state, std::vector<std::vector<int>> * end_solution, int n_iter, std::vector<int> & value_index){
+    if(memory[id] != -1){
+        flag_deb += 1;
+        return memory[id];
+    }else{
+        int min_value = INT16_MAX;
+        auto best_node_sol = node_sol;
+        auto best_move_sol = move_sol;
+        auto best_pattern_sol = pattern_sol;
+        auto best_len_move_sol = len_move_sol;
+        for (const auto & instruction : istructions_2) {
+            for(int len = 1; len >= 1; --len){
+                for(const auto & pattern : patterns_2){
+                    for(int i = 0; i < n; ++i){
+                        for(int j = 0; j < m; ++j){
+                            if(current_state[i][j] == 0){
+
+                                //MOVE SAVE
+                                auto new_current_state = current_state;
+                                auto new_node_sol = node_sol;
+                                new_node_sol.push_back({i,j});
+                                auto new_move_sol = move_sol;
+                                if(instruction[1] == 1){
+                                    new_move_sol.push_back("vertical");
+                                }else{
+                                    new_move_sol.push_back("orizontal");
+                                }
+                                auto new_pattern_sol = pattern_sol;
+                                new_pattern_sol.push_back(pattern);
+                                auto new_len_move_sol = len_move_sol;
+                                new_len_move_sol.push_back(len);
+
+                                //MOVE
+                                int new_id = moveFinal_2(id, i,  j,instruction,  len,  pattern, end_solution, &new_current_state,value_index);
+                                if(new_id > 0){
+                                    int a = dfs_algo_deb(new_node_sol,new_move_sol,new_pattern_sol,new_len_move_sol, new_id, memory, n,m,new_current_state,end_solution,(n_iter+1),value_index); 
+                                    
+                                    /*
+                                    printArray(new_current_state);
+                                    for(int sol_idx = 0;sol_idx < new_move_sol.size(); ++sol_idx){
+                                        printf("instruction = %s, len_inst = %d, start node = {%d, %d}, pattern ={",new_move_sol[sol_idx].c_str(), new_len_move_sol[sol_idx],new_node_sol[sol_idx][0],new_node_sol[sol_idx][1]);
+                                        for(int patt_l = 0; patt_l < new_pattern_sol[sol_idx].size();++patt_l){
+                                            printf(" %d",new_pattern_sol[sol_idx][patt_l]);
+                                        }
+                                        printf("}     TOTAL MOVE = %d\n", 1+a);
+                                    }  
+                                    */
+                                      
+                                   if(min_value < (1+a)){
+
+                                        auto best_node_sol = new_node_sol;
+                                        auto best_move_sol = new_move_sol;
+                                        auto best_pattern_sol = new_pattern_sol;
+                                        auto best_len_move_sol = new_len_move_sol;
+                                   }
+                                    min_value = std::min(min_value, (1+a));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        /*
+        printf("min value = %d\n", min_value);
+        if(min_value == 4){
+            for(int sol_idx = 0;sol_idx < best_move_sol.size(); ++sol_idx){
+                                        printf("instruction = %s, len_inst = %d, start node = {%d, %d}, pattern ={",best_move_sol[sol_idx].c_str(), best_len_move_sol[sol_idx],best_node_sol[sol_idx][0],best_node_sol[sol_idx][1]);
+                                        for(int patt_l = 0; patt_l < best_pattern_sol[sol_idx].size();++patt_l){
+                                            printf(" %d",best_pattern_sol[sol_idx][patt_l]);
+                                        }
+                                        printf("}     TOTAL MOVE = %d\n", min_value);
+                                    } 
+        }*/
+        int sfdas = memory[id];
+        memory[id] = min_value;
+        //printf("end ciclo id = %d, min value = %d\n",id, min_value);
+        return min_value;
     }
 }
 
@@ -153,9 +246,23 @@ int main(int argc, char *argv[])
             }
         }
     }    
-    
+    int max_id = 0;
+    for(int i = 0; i < total_colored; ++i){
+        max_id +=  std::pow(2, i); 
+    }
     int size = std::pow(2, total_colored); 
     std::vector<int> memory(size, -1);
-    int res = dfs_algo(0, memory,  n,  n, voidMat, &V, 0,map_value);
-    printf("res = %d\n",res);
+    memory[max_id] = 0;
+    
+    printf("max len = %d , max id = %d",size,max_id);
+    //int res = dfs_algo(0, memory,  n,  n, voidMat, &V, 0,map_value);
+    //printf("res = %d\n",res);
+    std::vector<std::vector<int>> node_sol = {};
+    std::vector<std::string> move_sol = {};
+    std::vector<std::vector<int>> pattern_sol = {};
+    std::vector<int> len_move_sol = {};
+    int res = dfs_algo_deb(node_sol,move_sol, pattern_sol,len_move_sol, 0, memory,  n,  n, voidMat, &V, 0,map_value);
+    //printf("END ) %d\n", res);
+    //int res = dfs_algo_2(node_sol,move_sol, pattern_sol,len_move_sol, 0, memory,  n,  n, voidMat, &V, 0,map_value);
+    printf("END ) %d\n", res);
 }
