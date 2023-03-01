@@ -212,6 +212,7 @@ int dfs_algo_deb( std::vector<std::vector<int>> & node_sol, std::vector<std::str
         }*/
         int sfdas = memory[id];
         memory[id] = min_value;
+
         //printf("end ciclo id = %d, min value = %d\n",id, min_value);
         return min_value;
     }
@@ -219,7 +220,7 @@ int dfs_algo_deb( std::vector<std::vector<int>> & node_sol, std::vector<std::str
 
 
 
-
+/*
 
 int dfs_algo_2(int id, std::vector<int> & memory, int n, int m, std::vector<std::vector<int>> & current_state, std::vector<std::vector<int>> * end_solution, int n_iter, std::vector<int> & value_index){
     if(memory[id] != -1){                                                       //BASE CASE pattern visited
@@ -254,13 +255,15 @@ int dfs_algo_2(int id, std::vector<int> & memory, int n, int m, std::vector<std:
         return min_value;
     }
 }
-
+*/
 
 
 int main(int argc, char *argv[])
 {   
     //std::string path = "./Graph/TestGraph.txt";
-    std::string path = "./Graph/Graph2.txt";
+    //std::string path = "./Graph/Graph2.txt";
+    std::string path = "./Graph/miniGraph.txt";
+
     auto V = file_reader(path);
     int n = V.size();
     std::vector<int> map_value(std::pow(n, 2), -1);
@@ -294,8 +297,16 @@ int main(int argc, char *argv[])
     std::vector<std::string> move_sol = {};
     std::vector<std::vector<int>> pattern_sol = {};
     std::vector<int> len_move_sol = {};
-    int res = dfs_algo_deb(node_sol,move_sol, pattern_sol,len_move_sol, 0, memory,  n,  n, voidMat, &V, 0,map_value);
+    //int res = dfs_algo_deb(node_sol,move_sol, pattern_sol,len_move_sol, 0, memory,  n,  n, voidMat, &V, 0,map_value);
     //printf("END ) %d\n", res);
-    //int res = dfs_algo_2(node_sol,move_sol, pattern_sol,len_move_sol, 0, memory,  n,  n, voidMat, &V, 0,map_value);
-    printf("END ) %d\n", res);
+    int res = dfs_algo_2(node_sol,move_sol, pattern_sol,len_move_sol, 0, memory,  n,  n, voidMat, &V, 0,map_value);
+
+    for(int sol_idx = 0;sol_idx < move_sol.size(); ++sol_idx){
+        printf("instruction = %s, len_inst = %d, start node = {%d, %d}, pattern ={",move_sol[sol_idx].c_str(), len_move_sol[sol_idx],node_sol[sol_idx][0],node_sol[sol_idx][1]);
+            for(int patt_l = 0; patt_l < pattern_sol[sol_idx].size();++patt_l){
+                printf(" %d",pattern_sol[sol_idx][patt_l]);
+            }
+            printf("}     TOTAL MOVE = %d\n", res);
+        }  
+    printf("\nEND = %d\n", res);
 }
