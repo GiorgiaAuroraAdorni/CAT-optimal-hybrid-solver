@@ -79,3 +79,35 @@ int executeInstruction(int id, int node_i, int node_j, std::vector<int> istructi
 }
 
 
+
+
+std::vector<std::vector<int>> checkForCopy(int id, int node_i, int node_j, std::vector<int> istruction, int lengthOfInst, std::vector<int> pattern, std::vector<std::vector<int>> * mat, std::vector<std::vector<int>> * actualRes,std::vector<int> & value_index){
+    std::vector<std::vector<int>> result;
+    for(int i = 0; i < mat->size(); ++i){
+        for(int j = 0; j < mat->size(); ++j){
+            if((*actualRes)[i][j] == 0){
+                auto tmp_actual_res = *actualRes;
+                int tmp_res = executeInstruction(id, i, j,istruction,lengthOfInst,pattern,mat,&tmp_actual_res,value_index);
+                if(tmp_res > 0){
+                    result.push_back({i,j});
+                }
+            }
+        }
+    }
+    return result;
+}
+
+int checkAllColor(std::vector<std::vector<int>> * mat, std::vector<std::vector<int>> * actualRes){
+    int only_color = -1;
+    for(int i = 0; i < mat->size(); ++i){
+        for(int j = 0; j < mat->size(); ++j){
+            if(only_color == -1 && (*mat)[i][j] != (*actualRes)[i][j]){
+                only_color = (*mat)[i][j];
+            }
+            if((*actualRes)[i][j] == 0 && only_color != (*mat)[i][j]){
+                return 0;
+            }
+        }
+    }
+    return only_color;
+}
