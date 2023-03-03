@@ -75,10 +75,10 @@ std::vector<std::vector<int>> patterns = {{3,3,4,4},{3,4,3,3},{4},{3},{4,3},{4,4
 //std::vector<std::vector<int>> istructions = {{0,0,1},{0,1,0},{0,-1,1},{0,-1,-1},{2,0,1,-1,0,0,-1},{2,-1,0,-1,0,0,-1,0,-1},{2,-1,0,-1,0,0,1,0,1}, {2,0,-1,0,-1,-1,0,-1,0},{2,0,1,0,1,-1,0,-1,0},{0,-1,1,1,1},{0,1,1,-1,1},{1,1,1,1,-1},{1,1,-1,1,1}};
 //std::vector<std::vector<int>> patterns = {{4},{3},{4,3},{4,4,3},{4,3,3,3},{3,4},{3,3,4,4},{3,4,3,3}};
 
-std::vector<std::vector<int>> istructions = {{2,0,1,-1,0,0,-1},{2,-1,0,-1,0,0,-1,0,-1},{2,-1,0,-1,0,0,1,0,1}, {2,0,-1,0,-1,-1,0,-1,0},{2,0,1,0,1,-1,0,-1,0},{0,-1,1,1,1},{0,1,1,-1,1},{1,1,1,1,-1},{1,1,-1,1,1},{0,0,1},{0,1,0},{0,-1,1},{0,-1,-1}};
-std::vector<std::vector<int>> patterns = {{3,4,4,4},{3,4,3},{4},{3},{4,3},{4,4,3},{4,3,3,3},{3,4},{3,3,4,4},{3,4,3,3}};
+std::vector<std::vector<int>> istructions = {{2,-1,0,-1,0,0,1,0,1},{2,0,1,-1,0,0,-1},{2,-1,0,-1,0,0,1,0,1}, {2,0,-1,0,-1,-1,0,-1,0},{2,0,1,0,1,-1,0,-1,0},{0,-1,1,1,1},{0,1,1,-1,1},{1,1,1,1,-1},{1,1,-1,1,1},{0,0,1},{0,1,0},{0,-1,1},{0,-1,-1}};
+std::vector<std::vector<int>> patterns = {{3,4,3},  {3,4,4,4},{4},{3},{4,3},{4,4,3},{4,3,3,3},{3,4},{3,3,4,4},{3,4,3,3}};
 
-int dfs_algo(std::vector<std::string> & memory_program, int id, std::vector<int> & memory, int n, int m, std::vector<std::vector<int>> & current_state, std::vector<std::vector<int>> * end_solution, int n_iter, std::vector<int> & value_index){
+int dfs_algo(std::vector<std::string> & memory_program, int id, std::vector<int> & memory, int n, int m, std::vector<std::vector<int>> & current_state, std::vector<std::vector<int>> * end_solution, int n_iter, std::vector<int> & value_index,std::string old_prog){
     
     if(memory[id] != -1){                               // BASE CASE --> We have alsa visited this case
         return memory[id];                              // return the value to reach the id-th state
@@ -101,7 +101,6 @@ int dfs_algo(std::vector<std::string> & memory_program, int id, std::vector<int>
                         for(int j = 0; j < m; ++j){
                             if(current_state[i][j] == 0 && pattern[0] == (*end_solution)[i][j]){
                                 
-                                //auto program_inst = buildInstruction(i,j,len,instruction,pattern);
                                 auto new_current_state = current_state;         //Duplicate the state to avoid to modify the object for other iteration
                                 int number_new = executeInstruction_number(0, i,  j,instruction,  len,  pattern, end_solution, &new_current_state);
 
@@ -114,18 +113,25 @@ int dfs_algo(std::vector<std::string> & memory_program, int id, std::vector<int>
                                     auto check_copy = checkForCopy(id, i,  j,instruction,  len,  pattern, end_solution, &new_current_state,value_index);
                                     int new_id = id;
                                     for(int ind_n = 0; ind_n < check_copy.size(); ++ind_n){
+                                        int prev_id = new_id;
                                         new_id = executeInstruction(new_id, check_copy[ind_n][0],check_copy[ind_n][1],instruction,  len,  pattern, end_solution, &new_current_state,value_index);
                                     }
                                     
+                                    
 
                                     //now we can call the recursion
-                                    int a = dfs_algo(memory_program, new_id, memory, n,m,new_current_state,end_solution,(n_iter+1),value_index);   
-                                    
-                                      
+                                    auto actualProg = buildInstruction(check_copy,len,instruction,pattern);
+                                    actualProg = actualProg + "\n" + old_prog;
+                                    int a = dfs_algo(memory_program, new_id, memory, n,m,new_current_state,end_solution,(n_iter+1),value_index, actualProg );   
                                     
                                     if(min_value > (1+a)){
-                                        memory_program[id] = buildInstruction(check_copy,len,instruction,pattern);
+                                        if(id == 0){
+                                            printf("top A = %d\n", a);
+                                            printf("top prog %s\n",(buildInstruction(check_copy,len,instruction,pattern)).c_str());
+                                        }
+                                        memory_program[new_id] = actualProg;
                                     }  
+                                    
                                     
                                     
                                     min_value = std::min(min_value, (1+a));     //check if is better than actual min
@@ -142,9 +148,85 @@ int dfs_algo(std::vector<std::string> & memory_program, int id, std::vector<int>
 }
 
 
+
+
+
+
+std::pair<int, std::string>  dfs_algo_program(std::vector<std::string> & memory_program, int id, std::vector<int> & memory, int n, int m, std::vector<std::vector<int>> & current_state, std::vector<std::vector<int>> * end_solution, int n_iter, std::vector<int> & value_index){
+    
+    if(memory[id] != -1){                               // BASE CASE --> We have alsa visited this case
+        return std::make_pair(memory[id], memory_program[id]);                              // return the value to reach the id-th state
+    }else{                                              // ELSE CASE --> We need to compute the move to reach the state
+        if(checkAllColor(end_solution, &current_state) > 0){
+            return std::make_pair(2, "full color");
+        }
+        int min_value = 10000;//INFINITY; 
+        std::string best_prog = "";
+        // We iterate, for every move, for every length of this move , for every patters, For every non colored Node
+        for (int inst = 0; inst < istructions.size(); ++inst) {
+            const auto instruction = istructions[inst];
+            //If the move have a prefix length we set the length 1 else we need to iterate for every possibility
+            int max_len_move = instruction[0] == 2 ? 1: n;
+            int min_len_mov = ((instruction.size() == 3 && instruction[1] == 1 && instruction[1] == 0)|| instruction[0] == 2)? 1 : 2;
+            // TODO: int min_len_move to have only orizontal can have len 1
+            for(int len = max_len_move; len >= min_len_mov; --len){
+                for(int patt = 0; patt < patterns.size();++patt){
+                    const auto pattern = patterns[patt];
+                    for(int i = 0; i < n; ++i){
+                        for(int j = 0; j < m; ++j){
+                            if(current_state[i][j] == 0 && pattern[0] == (*end_solution)[i][j]){
+                                
+                                auto new_current_state = current_state;         //Duplicate the state to avoid to modify the object for other iteration
+                                int number_new = executeInstruction_number(0, i,  j,instruction,  len,  pattern, end_solution, &new_current_state);
+                                    
+                                if(number_new > 0){                                 //If the result is accepted --> the function doesen't color outside the matrix
+                                                                                //AND the instruction which non removes more colors than it adds
+                                    
+                                    
+                                    //check if we can do a copy and repeat of this move
+                                    //but in all case we remove the last move for add into check_copy array
+                                    //auto check_copy = checkForCopy(id, i,  j,instruction,  len,  pattern, end_solution, &new_current_state,value_index);
+                                    std::vector<std::vector<int>> check_copy = {{i,j}};
+                                    int new_id = id;
+                                    for(int ind_n = 0; ind_n < check_copy.size(); ++ind_n){
+                                        int prev_id = new_id;
+                                        new_id = executeInstruction(new_id, check_copy[ind_n][0],check_copy[ind_n][1],instruction,  len,  pattern, end_solution, &new_current_state,value_index);
+                                    }
+                                    
+                                    
+
+                                    //now we can call the recursion
+                                    auto pair_rec = dfs_algo_program(memory_program, new_id, memory, n,m,new_current_state,end_solution,(n_iter+1),value_index);   
+                                    int a = pair_rec.first;
+                                    if(min_value > (1+a)){
+                                        auto actualProg = buildInstruction(check_copy,len,instruction,pattern);
+                                        best_prog =  actualProg + "\n" + pair_rec.second;
+                                    }  
+                                    
+                                    
+                                    min_value = std::min(min_value, (1+a));     //check if is better than actual min
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        memory[id] = min_value;             //Set this state visited
+        memory_program[id] = best_prog;
+        return std::make_pair(min_value, best_prog);
+    }
+}
+
+
+
+
+
+
+
 int main(int argc, char *argv[])
 {   
-    std::string path = "./Graph/miniGraph.txt";
+    std::string path = "./Graph/miniGraph_3.txt";
     //std::string path = "./Graph/TestGraph.txt";
     //read file and convert information into a matrix
     auto V = file_reader(path);
@@ -177,7 +259,7 @@ int main(int argc, char *argv[])
     int size = std::pow(2, total_colored);              //Memory have all possible combination of colore/no Color == 2^(n) with n = all colored cells
     std::vector<int> memory(size, -1);                  //Memory is initlized with -1 that means that this state is not reached in this moment
     memory[max_id] = 0;                                 //Set the value of complete colored case = 0, Used for the base case
-    
+    printf("%d\n",max_id);
     std::vector<std::string> memory_program(size,"");
 
 
@@ -207,18 +289,31 @@ int main(int argc, char *argv[])
     */
     
 
-/*
+   
     auto tmp_voidMat = voidMat;
     int id_1 = executeInstruction(0, 2,  0,{2,-1,0,-1,0,0,1,0,1},  1,  {3,4,3}, &V, &tmp_voidMat,map_value);
     id_1 = executeInstruction(id_1, 2,  1,{2,0,1,-1,0,0,-1},  1,  {3,4,4,4}, &V, &tmp_voidMat,map_value);
     printf("ID = %d \n", id_1);
-    printArray(tmp_voidMat);*/
+    printArray(tmp_voidMat);
     
 
+    /*
+    auto tmp_voidMat = voidMat;
+    int id_1 = executeInstruction(0, 2,  1,{0,0,1},  1,  {3}, &V, &tmp_voidMat,map_value);
+    id_1 = executeInstruction(id_1, 0,  1,{0,1,0},  3,  {3,4,4,4}, &V, &tmp_voidMat,map_value);
+    printf("ID = %d \n", id_1);
+    printArray(tmp_voidMat);
+    */
+    
+    
     //TODO Errore ce non salva sempre in id il minore
-    int res = dfs_algo(memory_program, 0, memory,  n,  n, voidMat, &V, 0,map_value);
-    printf("valueF = %d\n", memory[0]);
-    printf("valueF = %s\n", memory_program[0].c_str());
+    std::string start_prog = "";
+    auto res_pair = dfs_algo_program(memory_program, 0, memory,  n,  n, voidMat, &V, 0,map_value);
+    int res = res_pair.first;
+    printf("progr Final = %s\n", res_pair.second.c_str());
+    printf("value Final = %d\n", memory[0]);
     printf("END = %d\n", res);
+    
+    
 }
 

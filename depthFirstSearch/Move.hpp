@@ -42,6 +42,8 @@ int executeInstruction(int id, int node_i, int node_j, std::vector<int> istructi
         //update pattern index
         if((*mat)[i][j] == pattern[idx_pattern]){
             (*actualRes)[i][j] = pattern[idx_pattern];
+        }else{
+            (*actualRes)[i][j] = 0;
         }
         idx_pattern += 1;
         if(idx_pattern >= pattern.size()){
@@ -180,13 +182,31 @@ std::vector<std::vector<int>> checkForCopy(int id, int node_i, int node_j, std::
             }
         }
     }
-    for(int i = result_tmp.size()-1; i >= 0; --i){
-        for(int j = 0; j < result_tmp[i].size(); ++j){
-            result.push_back(result_tmp[i][j]);
+
+    for(int i = 0; i < result_tmp.size(); ++i){
+        auto tmp_result_to_order = result_tmp[i];
+        for(int a = 0; a < tmp_result_to_order.size(); ++a){
+            
+            for(int b = a+1; b < tmp_result_to_order.size(); b++){
+                auto Res_tmp = (*actualRes);
+                int tmp_id = executeInstruction(0, tmp_result_to_order[a][0],  tmp_result_to_order[a][1],istruction, lengthOfInst,  pattern, mat, &Res_tmp,value_index);
+                tmp_id = executeInstruction(0, tmp_result_to_order[b][0],  tmp_result_to_order[b][1],istruction, lengthOfInst,  pattern, mat, &Res_tmp,value_index);
+                if(tmp_id < 0){
+                    auto tmp = tmp_result_to_order[a];
+                    tmp_result_to_order[a] = tmp_result_to_order[b];
+                    tmp_result_to_order[b] = tmp;
+                }
+            }
+        }
+        for(int j = 0; j < tmp_result_to_order.size(); ++j){
+            result.push_back(tmp_result_to_order[j]);
         }
     }
+
+
     return result;
 }
+
 
 int checkAllColor(std::vector<std::vector<int>> * mat, std::vector<std::vector<int>> * actualRes){
     int only_color = -1;
