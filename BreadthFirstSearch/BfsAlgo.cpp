@@ -257,6 +257,6 @@ int main(int argc, char *argv[])
         
 }
 
-
+//TODO fill e overlap
 //TODO copy per mosse che danno stessi nuovi colori ma differenti posizioni lanciare piu programmi
 //TODO lanciare programma per ogni possibile combinazione copy :()

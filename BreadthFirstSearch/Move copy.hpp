@@ -1,4 +1,4 @@
-int WRONG_COLOR = 5;
+/*
 int executeInstruction(int id, int node_i, int node_j, std::vector<int> istruction, int lengthOfInst, std::vector<int> pattern, std::vector<std::vector<int>> * mat, std::vector<std::vector<int>> * actualRes,std::vector<int> & value_index){
     //printf("start MOve\n");
     int n = mat->size();
@@ -43,7 +43,7 @@ int executeInstruction(int id, int node_i, int node_j, std::vector<int> istructi
         if((*mat)[i][j] == pattern[idx_pattern]){
             (*actualRes)[i][j] = pattern[idx_pattern];
         }else{
-            (*actualRes)[i][j] = WRONG_COLOR;
+            (*actualRes)[i][j] = 0;
         }
         idx_pattern += 1;
         if(idx_pattern >= pattern.size()){
@@ -215,10 +215,11 @@ int checkAllColor(std::vector<std::vector<int>> * mat, std::vector<std::vector<i
             if(only_color == -1 && (*mat)[i][j] != (*actualRes)[i][j]){
                 only_color = (*mat)[i][j];
             }
-            if((*actualRes)[i][j] == WRONG_COLOR ||(((*actualRes)[i][j] == 0) && only_color != (*mat)[i][j])){
+            if((*actualRes)[i][j] == 0 && only_color != (*mat)[i][j]){
                 return 0;
             }
         }
     }
     return only_color;
 }
+*/
