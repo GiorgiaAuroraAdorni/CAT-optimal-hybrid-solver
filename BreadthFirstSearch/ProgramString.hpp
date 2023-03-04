@@ -1,9 +1,12 @@
-#include <regex>
 #include <iostream>
+#include <string>
 #include <vector>
+#include <sstream>
+#include <regex>
+
 
 int main() {
-    std::string input = "Nodes({0,0}{0,2}{1,3}{5,4}){orizontal} len = {3}  Pattern = {3,4}";
+    std::string input = "Nodes({2,0}){square} len = {1}  Pattern = {1,4,1,2}";
 
     // Cerca tutti i numeri tra parentesi graffe e aggiungili alla lista di nodi
     std::vector<std::vector<int>> nodes;

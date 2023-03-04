@@ -117,6 +117,7 @@ std::pair<int, std::string>  bfs_algo_program(std::vector<std::string> & memory_
 
                                 //check if we can do a copy and repeat of this move
                                 //but in all case we remove the last move for add into check_copy array
+                                auto check_copy = checkForCopy(id, i,  j,instruction,  len,  pattern, end_solution, &new_current_state,value_index);
                                 std::vector<std::vector<int>> check_copy = {{i,j}};                                    
                                 int new_id = id;
                                 for(int ind_n = 0; ind_n < check_copy.size(); ++ind_n){
@@ -136,35 +137,16 @@ std::pair<int, std::string>  bfs_algo_program(std::vector<std::string> & memory_
                                     
                                 min_value = std::min(min_value, (1+a));     //check if is better than actual min
 
-                                /*
                                 if(copy_instruction){
-                                    new_current_state = current_state; 
-
                                     auto check_copy = checkForCopy(id, i,  j,instruction,  len,  pattern, end_solution, &new_current_state,value_index);
                                     //std::vector<std::vector<int>> check_copy = {{i,j}};                                    
-                                    new_id = id;
+                                    int new_id = id;
                                     for(int ind_n = 0; ind_n < check_copy.size(); ++ind_n){
-
-                                        number_new = executeInstruction_number(0, i,  j,instruction,  len,  pattern, end_solution, &new_current_state);
-
-                                        if(number_new <= 0){
-                                            continue;
-                                        }
-
                                         int prev_id = new_id;
                                         new_id = executeInstruction(new_id, check_copy[ind_n][0],check_copy[ind_n][1],instruction,  len,  pattern, end_solution, &new_current_state,value_index);
-
-                                        auto pair_rec = bfs_algo_program(memory_program, new_id, memory, n,m,new_current_state,end_solution,(n_iter+1),value_index);   
-                                        int a = pair_rec.first;
-                                        if(min_value > (1+a)){
-                                            auto actualProg = buildInstruction(check_copy,len,instruction,pattern);
-                                            best_prog =  actualProg + "\n" + pair_rec.second;
-                                        }  
-                                        min_value = std::min(min_value, (1+a));     //check if is better than actual min
                                     }
                                     copy_instruction = false;
                                 }
-                                */
                             }
                         }
                     }
@@ -187,7 +169,7 @@ std::pair<int, std::string>  bfs_algo_program(std::vector<std::string> & memory_
 
 int main(int argc, char *argv[])
 {   
-    std::string path = "./Graph/miniGraph_4.txt";
+    std::string path = "./Graph/miniGraph_3.txt";
     //std::string path = "./Graph/TestGraph.txt";
     //read file and convert information into a matrix
     auto V = file_reader(path);
@@ -286,4 +268,4 @@ int main(int argc, char *argv[])
         
 }
 
-//TODO bug square prima
+//TODO lanciare programma per ogni possibile combinazione copy :()
