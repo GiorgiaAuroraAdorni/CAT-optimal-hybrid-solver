@@ -1,6 +1,7 @@
-# CAT_DFS
-Cross Array Task depth first search
+# CAT_BFS
+Cross Array Task Breadth-First Search
 
-## Run Test
+## Run Program
+* cd BreadthFirstSearch/
 * clang++ -std=c++11 -stdlib=libc++ -g test.cpp -o test
-* ./test
+* ./bfs
