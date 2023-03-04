@@ -72,7 +72,7 @@ int executeInstruction(int id, int node_i, int node_j, std::vector<int> istructi
         }
 
     }
-    if(min_to_color <= 0){
+    if(min_to_color < 0){
         id = -10000;
     }
     //printf("end MOve\n");
@@ -149,7 +149,7 @@ int executeInstruction_number(int id, int node_i, int node_j, std::vector<int> i
         }
 
     }
-    if(min_to_color <= 0){
+    if(min_to_color < 0){
         id = -10000;
     }
     //printf("end MOve\n");

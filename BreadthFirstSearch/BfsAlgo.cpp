@@ -49,7 +49,10 @@ std::string buildInstruction(std::vector<std::vector<int>> index_node, int len, 
 
     result = result + "{"+GET_NAME_INSTRUCTION[instruction]+ "} len = {"+ std::to_string(len) + "}  Pattern = {";
     for(int i = 0; i < pattern.size(); ++i){
-        result = result + std::to_string(pattern[i]) + " ";
+        if(i != 0){
+            result = result + ",";
+        }
+        result = result + std::to_string(pattern[i]);
     }
     result = result + "}";
     return result;
@@ -68,7 +71,7 @@ void printArray( std::vector<std::vector<int>> mat){
     }
 }
 
-std::vector<std::vector<int>> istructions = {{0,0,1},{0,1,0},{0,-1,1},{0,-1,-1},{2,0,1,-1,0,0,-1},{2,-1,0,-1,0,0,-1,0,-1},{2,-1,0,-1,0,0,1,0,1}, {2,0,-1,0,-1,-1,0,-1,0},{2,0,1,0,1,-1,0,-1,0},{0,-1,1,1,1},{0,1,1,-1,1},{1,1,1,1,-1},{1,1,-1,1,1}};
+std::vector<std::vector<int>> istructions = {{2,0,1,-1,0,0,-1},{0,0,1},{0,1,0},{0,-1,1},{0,-1,-1},{2,-1,0,-1,0,0,-1,0,-1},{2,-1,0,-1,0,0,1,0,1}, {2,0,-1,0,-1,-1,0,-1,0},{2,0,1,0,1,-1,0,-1,0},{0,-1,1,1,1},{0,1,1,-1,1},{1,1,1,1,-1},{1,1,-1,1,1}};
 std::vector<std::vector<int>> patterns = {{4},{3},{4,3},{4,4,3},{4,3,3,3},{3,4},{3,3,4,4},{3,4,3,3},{3,4,3},{3,4,4,4}};
 
 
@@ -84,7 +87,7 @@ std::pair<int, std::string>  bfs_algo_program(std::vector<std::string> & memory_
     }                                           // ELSE CASE --> We need to compute the move to reach the state
     int check_color = checkAllColor(end_solution, &current_state);
     if(check_color > 0){
-        return std::make_pair(10, ("Nodes({0,0}){fill} len = {1}  Pattern = {"+std::to_string(check_color)+"}\n"));
+        return std::make_pair(1, ("Nodes({0,0}){fill} len = {1}  Pattern = {"+std::to_string(check_color)+"}\n"));
     }
     int min_value = 10000;//INFINITY; 
     std::string best_prog = "";
@@ -98,6 +101,9 @@ std::pair<int, std::string>  bfs_algo_program(std::vector<std::string> & memory_
         for(int len = max_len_move; len >= min_len_mov; --len){
             for(int patt = 0; patt < patterns.size();++patt){
                 const auto pattern = patterns[patt];
+                if(instruction[0] == 0 &&  pattern.size() > len){
+                    continue;
+                }
                 for(int i = 0; i < n; ++i){
                     for(int j = 0; j < m; ++j){
                         if(current_state[i][j] == 0 && pattern[0] == (*end_solution)[i][j]){
@@ -105,8 +111,8 @@ std::pair<int, std::string>  bfs_algo_program(std::vector<std::string> & memory_
                             int number_new = executeInstruction_number(0, i,  j,instruction,  len,  pattern, end_solution, &new_current_state);
                             
 
-                            if(number_new > 0){                                 //If the result is accepted --> the function doesen't color outside the matrix
-                                                                            //AND the instruction which non removes more colors than it adds
+                            if(number_new > 0){//If the result is accepted --> the function doesen't color outside the matrix
+                                               //AND the instruction which non removes more colors than it adds
                                 
                                 
                                 //check if we can do a copy and repeat of this move
@@ -119,13 +125,6 @@ std::pair<int, std::string>  bfs_algo_program(std::vector<std::string> & memory_
                                     new_id = executeInstruction(new_id, check_copy[ind_n][0],check_copy[ind_n][1],instruction,  len,  pattern, end_solution, &new_current_state,value_index);
                                 }
                                 
-                                
-                                if(new_id < 0){
-                                    printArray(current_state);
-                                    printf("ID = %d , Instruction %s\n",new_id, (buildInstruction(check_copy,len,instruction,pattern)).c_str());
-                                    printArray(new_current_state);
-                                }
-                                    
 
                                 //now we can call the recursion
                                 auto pair_rec = bfs_algo_program(memory_program, new_id, memory, n,m,new_current_state,end_solution,(n_iter+1),value_index);   
@@ -144,6 +143,7 @@ std::pair<int, std::string>  bfs_algo_program(std::vector<std::string> & memory_
             }
         }
     }
+
     memory[id] = min_value;             //Set this state visited
     memory_program[id] = best_prog;
     return std::make_pair(min_value, best_prog);
@@ -158,7 +158,7 @@ std::pair<int, std::string>  bfs_algo_program(std::vector<std::string> & memory_
 
 int main(int argc, char *argv[])
 {   
-    std::string path = "./Graph/miniGraph.txt";
+    std::string path = "./Graph/miniGraph_3.txt";
     //std::string path = "./Graph/TestGraph.txt";
     //read file and convert information into a matrix
     auto V = file_reader(path);
@@ -228,24 +228,23 @@ int main(int argc, char *argv[])
     printArray(tmp_voidMat);
     */
 
+    
     /*
     auto tmp_voidMat = voidMat;
-    int id_1 = executeInstruction(0, 0,  0,{0,0,1},  3,  {3, 1}, &V, &tmp_voidMat,map_value);
-    id_1 = executeInstruction(id_1, 2,  0,{0,0,1},  3,  {3, 1}, &V, &tmp_voidMat,map_value);
-    id_1 = executeInstruction(id_1, 1,  0,{2,0,1,-1,0,0,-1},  1,  {3, 1}, &V, &tmp_voidMat,map_value);
-    id_1 = executeInstruction(id_1, 1,  1,{2,0,1,-1,0,0,-1},  1,  {3,1}, &V, &tmp_voidMat,map_value);
+    int id_1 = executeInstruction(0, 2,  0,{2,-1,0,-1,0,0,1,0,1},  2,  {1,2,3,4}, &V, &tmp_voidMat,map_value);
+    id_1 = executeInstruction(id_1, 2,  1,{2,0,1,-1,0,0,-1},  1,  {3,1}, &V, &tmp_voidMat,map_value);
     printf("ID = %d \n", id_1);
     printArray(tmp_voidMat);
     return 1;*/
+    
+    
     
     patterns = generatePatterns(4);
     std::string start_prog = "";
 
 
     auto start = std::chrono::high_resolution_clock::now();
-    printArray(V);
     auto res_pair = bfs_algo_program(memory_program, 0, memory,  n,  n, voidMat, &V, 0,map_value);
-    printf("end\n");
 
     auto end = std::chrono::high_resolution_clock::now();
     auto duration_sec = std::chrono::duration_cast<std::chrono::seconds>(end - start);
@@ -255,7 +254,9 @@ int main(int argc, char *argv[])
     int res = res_pair.first;
     printf("value Final = %d\n", res);
     printf("progr Final = \n%s", res_pair.second.c_str());
-    
-    
+        
 }
 
+
+//TODO copy per mosse che danno stessi nuovi colori ma differenti posizioni lanciare piu programmi
+//TODO lanciare programma per ogni possibile combinazione copy :()
