@@ -5,9 +5,18 @@
 #include <regex>
 
 
-int main() {
-    std::string input = "Nodes({2,0}){square} len = {1}  Pattern = {1,4,1,2}";
+std::vector<std::string> parseString(const std::string& inputStr) {
+    std::vector<std::string> result;
+    std::stringstream ss(inputStr);
+    std::string item;
+    while (std::getline(ss, item, '\n')) {
+        result.push_back(item);
+    }
+    return result;
+}
 
+
+void getProg(std::string input, std::string * instruction_in, int * len_in, std::vector<int> & patterns_in, std::vector<std::vector<int>> & nodes_in) {
     // Cerca tutti i numeri tra parentesi graffe e aggiungili alla lista di nodi
     std::vector<std::vector<int>> nodes;
     std::regex rgx("\\{(\\d+),(\\d+)\\}");
@@ -19,19 +28,24 @@ int main() {
         nodes.push_back({x, y});
     }
 
+    // Estrai l'istruzione dalla stringa
+    std::regex rgx2("Instruction\\{([^\\}]*)\\}");
+    std::smatch match;
+    if (std::regex_search(input, match, rgx2)) {
+        *instruction_in = match[1].str();
+    }
+
     // Estrai gli altri valori dalla stringa
-    std::string instruct = "orizontal";
     int len = 0;
     std::vector<int> pattern;
 
-    std::regex rgx2("len\\s*=\\s*\\{(\\d+)\\}");
-    std::smatch match;
-    if (std::regex_search(input, match, rgx2)) {
+    std::regex rgx3("len\\s*=\\s*\\{(\\d+)\\}");
+    if (std::regex_search(input, match, rgx3)) {
         len = std::stoi(match[1].str());
     }
 
-    std::regex rgx3("Pattern\\s*=\\s*\\{([^\\}]*)\\}");
-    if (std::regex_search(input, match, rgx3)) {
+    std::regex rgx4("Pattern\\s*=\\s*\\{([^\\}]*)\\}");
+    if (std::regex_search(input, match, rgx4)) {
         std::string pattern_str = match[1].str();
         std::stringstream ss(pattern_str);
         int num;
@@ -43,21 +57,7 @@ int main() {
         }
     }
 
-    // Stampa i valori estratti
-    std::cout << "Nodes: ";
-    for (auto node : nodes) {
-        std::cout << "{" << node[0] << "," << node[1] << "} ";
-    }
-    std::cout << std::endl;
-
-    std::cout << "Instruction: " << instruct << std::endl;
-    std::cout << "Len: " << len << std::endl;
-
-    std::cout << "Pattern: ";
-    for (auto num : pattern) {
-        std::cout << num << " ";
-    }
-    std::cout << std::endl;
-
-    return 0;
+    nodes_in = nodes;
+    *len_in = len;
+    patterns_in = pattern;
 }

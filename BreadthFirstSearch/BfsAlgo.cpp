@@ -14,7 +14,7 @@
 #include "./Move.hpp"
 #include "./Patterns.hpp"
 #include "./HashFile.hpp"
-
+#include "./ProgramString.hpp"
 
 std::unordered_map<std::string, std::vector<int>> GET_INSTRUCTION = {
         {"orizontal", {0,0,1}},
@@ -42,12 +42,8 @@ std::string buildInstruction(std::vector<std::vector<int>> index_node, int len, 
         result = result+ "{" +tmp_1 + "," + tmp_2 + "}";
     }
     result = result + ")";
-    
-    if(index_node.size() > 2){
-        result = result + " copy inst ";
-    }
 
-    result = result + "{"+GET_NAME_INSTRUCTION[instruction]+ "} len = {"+ std::to_string(len) + "}  Pattern = {";
+    result = result + "Instruction{"+GET_NAME_INSTRUCTION[instruction]+ "} len = {"+ std::to_string(len) + "}  Pattern = {";
     for(int i = 0; i < pattern.size(); ++i){
         if(i != 0){
             result = result + ",";
@@ -283,6 +279,32 @@ int main(int argc, char *argv[])
     int res = res_pair.first;
     printf("value Final = %d\n", res);
     printf("\n%s", res_pair.second.c_str());
+    printf("\n");
+    auto prog_arr = parseString(res_pair.second);
+
+    bool exec = false;
+    //Exectute program
+    if(exec){
+        auto void_mat_res = voidMat;
+        for(int i = 0; i < prog_arr.size(); ++i){
+            std::vector<int> pattern_t;
+            std::string prog_t;
+            int len;
+            std::vector<std::vector<int>> node_t;
+            getProg(prog_arr[i],&prog_t, &len,pattern_t,node_t);
+            printf("%s\n", buildInstruction(node_t,len,GET_INSTRUCTION[prog_t],pattern_t).c_str());
+            for(int j = 0; j < node_t.size(); ++j){
+                if(prog_t == "fill"){
+                    break;
+                }
+                executeInstruction(0, node_t[j][0],  node_t[j][1],GET_INSTRUCTION[prog_t],  len,  pattern_t, &V, &void_mat_res,map_value);
+            }
+            printArray(void_mat_res);
+            printf("\n");
+        }
+        printArray(void_mat_res);
+    }
+    
         
 }
 
