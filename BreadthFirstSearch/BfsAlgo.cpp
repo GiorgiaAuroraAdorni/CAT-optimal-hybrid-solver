@@ -16,43 +16,7 @@
 #include "./HashFile.hpp"
 #include "./ProgramString.hpp"
 
-std::unordered_map<std::string, std::vector<int>> GET_INSTRUCTION = {
-        {"orizontal", {0,0,1}},
-        {"vertical", {0,1,0}},
-        {"diagonal-U-R", {0,-1,1}},
-        {"diagonal-U-L", {0,-1,-1}},
-        {"square", {2,0,1,-1,0,0,-1}},
-        {"L-UP-L", {2,-1,0,-1,0,0,-1,0,-1}},
-        {"L-UP-R", {2,-1,0,-1,0,0,1,0,1}},
-        {"L-R-UP", {2,0,-1,0,-1,-1,0,-1,0}},
-        {"L-L-UP", {2,0,1,0,1,-1,0,-1,0}},
-        {"ZigZag-Oriz-UP-DOW", {0,-1,1,1,1}},
-        {"ZigZag-Oriz-DOW-UP", {0,1,1,-1,1}},
-        {"ZigZag-Vert-R-L", {1,1,1,1,-1}},
-        {"ZigZag-Vert-L-R", {1,1,-1,1,1}}
-};
 
-
-
-std::string buildInstruction(std::vector<std::vector<int>> index_node, int len, std::vector<int> instruction, std::vector<int> pattern){
-    std::string result = "Nodes(";
-    for(int i = 0; i < index_node.size(); i++){
-        auto tmp_1 = std::to_string(index_node[i][0]);
-        auto tmp_2 = std::to_string(index_node[i][1]);
-        result = result+ "{" +tmp_1 + "," + tmp_2 + "}";
-    }
-    result = result + ")";
-
-    result = result + "Instruction{"+GET_NAME_INSTRUCTION[instruction]+ "} len = {"+ std::to_string(len) + "}  Pattern = {";
-    for(int i = 0; i < pattern.size(); ++i){
-        if(i != 0){
-            result = result + ",";
-        }
-        result = result + std::to_string(pattern[i]);
-    }
-    result = result + "}";
-    return result;
-}
 
 void printArray( std::vector<std::vector<int>> mat){
     for(int i = 0; i < mat.size(); ++i){
@@ -67,12 +31,13 @@ void printArray( std::vector<std::vector<int>> mat){
     }
 }
 
-std::vector<std::vector<int>> istructions = {{2,0,1,-1,0,0,-1},{0,0,1},{0,1,0},{0,-1,1},{0,-1,-1},{2,-1,0,-1,0,0,-1,0,-1},{2,-1,0,-1,0,0,1,0,1}, {2,0,-1,0,-1,-1,0,-1,0},{2,0,1,0,1,-1,0,-1,0},{0,-1,1,1,1},{0,1,1,-1,1},{1,1,1,1,-1},{1,1,-1,1,1}};
+std::vector<std::vector<int>> istructions = {{0,0,1},{0,1,0},{0,-1,1},{0,-1,-1},{2,0,1,-1,0,0,-1},{2,-1,0,-1,0,0,-1,0,-1},{2,-1,0,-1,0,0,1,0,1}, {2,0,-1,0,-1,-1,0,-1,0},{2,0,1,0,1,-1,0,-1,0},{0,-1,1,1,1},{0,1,1,-1,1},{1,1,1,1,-1},{1,1,-1,1,1}};
 std::vector<std::vector<int>> patterns = {{4},{3},{4,3},{4,4,3},{4,3,3,3},{3,4},{3,3,4,4},{3,4,3,3},{3,4,3},{3,4,4,4}};
 
 
 std::pair<int, std::string>  bfs_algo_program(std::vector<std::string> & memory_program, int id, std::vector<int> & memory, int n, int m, std::vector<std::vector<int>> & current_state, std::vector<std::vector<int>> * end_solution, int n_iter, std::vector<int> & value_index){
     if(id < 0){
+        printf("BUG\n");
         return std::make_pair(10000000, "no correct program");
     }
     if(n_iter > 4){
@@ -183,7 +148,7 @@ std::pair<int, std::string>  bfs_algo_program(std::vector<std::string> & memory_
 
 int main(int argc, char *argv[])
 {   
-    std::string path = "./Graph/miniGraph_4.txt";
+    std::string path = "./Graph/miniGraph_5.txt";
     //std::string path = "./Graph/TestGraph.txt";
     //read file and convert information into a matrix
     auto V = file_reader(path);

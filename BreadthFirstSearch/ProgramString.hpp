@@ -5,6 +5,26 @@
 #include <regex>
 
 
+std::string buildInstruction(std::vector<std::vector<int>> index_node, int len, std::vector<int> instruction, std::vector<int> pattern){
+    std::string result = "Nodes(";
+    for(int i = 0; i < index_node.size(); i++){
+        auto tmp_1 = std::to_string(index_node[i][0]);
+        auto tmp_2 = std::to_string(index_node[i][1]);
+        result = result+ "{" +tmp_1 + "," + tmp_2 + "}";
+    }
+    result = result + ")";
+
+    result = result + "Instruction{"+GET_NAME_INSTRUCTION[instruction]+ "} len = {"+ std::to_string(len) + "}  Pattern = {";
+    for(int i = 0; i < pattern.size(); ++i){
+        if(i != 0){
+            result = result + ",";
+        }
+        result = result + std::to_string(pattern[i]);
+    }
+    result = result + "}";
+    return result;
+}
+
 std::vector<std::string> parseString(const std::string& inputStr) {
     std::vector<std::string> result;
     std::stringstream ss(inputStr);
