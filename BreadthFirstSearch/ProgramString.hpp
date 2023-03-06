@@ -35,6 +35,7 @@ std::vector<std::string> parseString(const std::string& inputStr) {
     return result;
 }
 
+//FATTO DA CHATGPT3
 
 void getProg(std::string input, std::string * instruction_in, int * len_in, std::vector<int> & patterns_in, std::vector<std::vector<int>> & nodes_in) {
     // Cerca tutti i numeri tra parentesi graffe e aggiungili alla lista di nodi
@@ -47,7 +48,7 @@ void getProg(std::string input, std::string * instruction_in, int * len_in, std:
         int y = std::stoi((*iter)[2].str());
         nodes.push_back({x, y});
     }
-
+    //nodes.pop_back();
     // Estrai l'istruzione dalla stringa
     std::regex rgx2("Instruction\\{([^\\}]*)\\}");
     std::smatch match;

@@ -78,7 +78,9 @@ std::pair<int, std::string>  bfs_algo_program(std::vector<std::string> & memory_
 
                                 //check if we can do a copy and repeat of this move
                                 //but in all case we remove the last move for add into check_copy array
-                                std::vector<std::vector<int>> check_copy = {{i,j}};                                    
+
+                                std::vector<std::vector<int>> check_copy = {{i,j}};       
+                                //auto check_copy = checkForCopy(id, i,  j,instruction,  len,  pattern, end_solution, &new_current_state,value_index);
                                 int new_id = id;
                                 for(int ind_n = 0; ind_n < check_copy.size(); ++ind_n){
                                     int prev_id = new_id;
@@ -97,15 +99,18 @@ std::pair<int, std::string>  bfs_algo_program(std::vector<std::string> & memory_
                                     
                                 min_value = std::min(min_value, (1+a));     //check if is better than actual min
 
-                                /*
+                                
                                 if(copy_instruction){
                                     new_current_state = current_state; 
 
                                     auto check_copy = checkForCopy(id, i,  j,instruction,  len,  pattern, end_solution, &new_current_state,value_index);
-                                    //std::vector<std::vector<int>> check_copy = {{i,j}};                                    
+                                    //std::vector<std::vector<int>> check_copy = {{i,j}}; 
+                                    
+
                                     new_id = id;
                                     for(int ind_n = 0; ind_n < check_copy.size(); ++ind_n){
-
+                                        i = check_copy[ind_n][0];
+                                        j = check_copy[ind_n][1];
                                         number_new = executeInstruction_number(0, i,  j,instruction,  len,  pattern, end_solution, &new_current_state);
 
                                         if(number_new <= 0){
@@ -120,12 +125,13 @@ std::pair<int, std::string>  bfs_algo_program(std::vector<std::string> & memory_
                                         if(min_value > (1+a)){
                                             auto actualProg = buildInstruction(check_copy,len,instruction,pattern);
                                             best_prog =  actualProg + "\n" + pair_rec.second;
-                                        }  
+                                        } 
+
+ 
                                         min_value = std::min(min_value, (1+a));     //check if is better than actual min
                                     }
                                     copy_instruction = false;
                                 }
-                                */
                             }
                         }
                     }
@@ -145,10 +151,9 @@ std::pair<int, std::string>  bfs_algo_program(std::vector<std::string> & memory_
 
 
 
-
 int main(int argc, char *argv[])
 {   
-    std::string path = "./Graph/miniGraph_5.txt";
+    std::string path = "./Graph/miniGraph_2.txt";
     //std::string path = "./Graph/TestGraph.txt";
     //read file and convert information into a matrix
     auto V = file_reader(path);
@@ -232,7 +237,7 @@ int main(int argc, char *argv[])
     patterns = generatePatterns(4);
     std::string start_prog = "";
 
-
+    
     auto start = std::chrono::high_resolution_clock::now();
     auto res_pair = bfs_algo_program(memory_program, 0, memory,  n,  n, voidMat, &V, 0,map_value);
 
@@ -243,10 +248,13 @@ int main(int argc, char *argv[])
 
     int res = res_pair.first;
     printf("value Final = %d\n", res);
-    printf("\n%s", res_pair.second.c_str());
+    printf("______________________________ Program ______________________________\n%s", res_pair.second.c_str());
     printf("\n");
     auto prog_arr = parseString(res_pair.second);
+    
+    
 
+    //std::vector<std::string> prog_arr = {"Nodes({2,1}{3,0}{3,1}{3,2}{2,0}{2,2})Instruction{square} len = {1}  Pattern = {3,3,4}\n"};
     bool exec = false;
     //Exectute program
     if(exec){
