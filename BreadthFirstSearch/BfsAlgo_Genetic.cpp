@@ -42,10 +42,10 @@ void printArray( std::vector<std::vector<int>> mat){
 std::pair<int, std::string>  bfs_algo_program(std::vector<std::vector<int>> istructions,std::vector<std::vector<int>> patterns, std::vector<std::string> & memory_program, int id, std::vector<int> & memory, int n, int m, std::vector<std::vector<int>> & current_state, std::vector<std::vector<int>> * end_solution, int n_iter, std::vector<int> & value_index){
     if(id < 0){
         printf("BUG\n");
-        return std::make_pair(10000000, "no correct program");
+        return std::make_pair(10000, "no correct program");
     }
     if(n_iter > 4){
-        return std::make_pair(10000000, "no correct program");
+        return std::make_pair(10000, "no correct program");
     }
     if(memory[id] != -1){                               // BASE CASE --> We have alsa visited this case
         return std::make_pair(memory[id], memory_program[id]);                              // return the value to reach the id-th state
@@ -157,7 +157,7 @@ std::pair<int, std::string>  bfs_algo_program(std::vector<std::vector<int>> istr
 
 int main(int argc, char *argv[])
 {   
-    std::string path = "./Graph/miniGraph_6.txt";
+    std::string path = "./Graph/miniGraph_2.txt";
     //std::string path = "./Graph/TestGraph.txt";
     //read file and convert information into a matrix
     auto V = file_reader(path);
@@ -197,65 +197,99 @@ int main(int argc, char *argv[])
     
     
     std::vector<std::vector<int>> TOT_istructions = {{0,0,1},{0,1,0},{0,-1,1},{0,-1,-1},{2,0,1,-1,0,0,-1},{2,-1,0,-1,0,0,-1,0,-1},{2,-1,0,-1,0,0,1,0,1}, {2,0,-1,0,-1,-1,0,-1,0},{2,0,1,0,1,-1,0,-1,0},{0,-1,1,1,1},{0,1,1,-1,1},{1,1,1,1,-1},{1,1,-1,1,1}};
-    std::vector<std::vector<int>> TOT_patterns = {{1,2},{1},{2},{1,1,2},{1,1,2,2}};//generatePatterns(4);
+    std::vector<std::vector<int>> TOT_patterns = generatePatterns(4);
     std::string start_prog = "";
 
+
+    
     int time = 0;
     std::vector<Individual> Population;
+
+    printf("Initialization of individuals START\n");
+
     for(int i = 0; i < NUMBER_INDIVIDUAL; i++){
         Individual indiv_tmp = generateRandom(NUMBER_GENE, TOT_patterns);
-        int fit = bfs_algo_program(indiv_tmp.instruction, indiv_tmp.pattern,memory_program, 0, memory,  n,  n, voidMat, &V, 0,map_value).first;
+        auto memory_program_tmp = memory_program;
+        auto memory_tmp = memory;
+        auto voidMat_tmp = voidMat;
+        int fit = bfs_algo_program(indiv_tmp.instruction, indiv_tmp.pattern,memory_program_tmp, 0, memory_tmp,  n,  n, voidMat_tmp, &V, 0,map_value).first;
+        printf("%d  ", fit);
         indiv_tmp.fitness = fit;
-        printIndividual(indiv_tmp);
-        if(fit < 100){
-            printf("WOOOOOO\n\n\n\n");
-        }
         Population.push_back(indiv_tmp);
     }
-    return 1;
+    printf("Initialization of individuals COMPLETE\n");
 
-    while(time < 20){
+
+
+    // Individual solutionIndividual;
+    // solutionIndividual.instruction = {{0,0,1},{0,1,0},{0,-1,1},{0,-1,-1},{2,-1,0,-1,0,0,-1,0,-1},{2,-1,0,-1,0,0,1,0,1}};
+    // solutionIndividual.pattern = {{1,2},{1},{2},{1,1,2},{3},{4}};
+    // auto memory_program_tmp = memory_program;
+    // auto memory_tmp = memory;
+    // auto voidMat_tmp = voidMat;
+    // int fit = bfs_algo_program(solutionIndividual.instruction, solutionIndividual.pattern,memory_program_tmp, 0, memory_tmp,  n,  n, voidMat_tmp, &V, 0,map_value).first;
+    // solutionIndividual.fitness = fit;
+    // printf("fit = %d, fitness %d\n",fit,solutionIndividual.fitness );
+    // return 1;
+
+    printf("Genetic Algo START\n");
+    auto start = std::chrono::high_resolution_clock::now();
+
+    while(time < 5){
+        
+        
         auto Parents = selectINdividuals(Population, NUMBER_PARENT);
         std::vector<Individual> Childs;
-
         while(Parents.size() > 0){
-            auto p1 = Parents[Parents.size()];
+            auto p1 = Parents[Parents.size() - 1];
             Parents.pop_back();
-            auto p2 = Parents[Parents.size()];
+            auto p2 = Parents[Parents.size() - 1];
             Parents.pop_back();
             
-            printf("CIAO\n");
             auto child12 = reproduction(p1, p2, TOT_patterns);
-            printf("12 skjdha %lu\n", child12.size());
-            auto child_1 = child12[0];
-            Childs.push_back(child_1);
+            Childs.push_back(child12[0]);
             Childs.push_back(child12[1]);
         }
-        printf("12 skjdha \n");
 
         killPopulation((NUMBER_INDIVIDUAL-NUMBER_PARENT), Population);
 
         int min = 10000;
 
         for(int i = 0; i < Childs.size(); ++i){
-            int fit = bfs_algo_program(Childs[i].instruction, Childs[i].pattern,memory_program, 0, memory,  n,  n, voidMat, &V, 0,map_value).first;
+            auto memory_program_tmp = memory_program;
+            auto memory_tmp = memory;
+            auto voidMat_tmp = voidMat;
+            int fit = bfs_algo_program(Childs[i].instruction, Childs[i].pattern,memory_program_tmp, 0, memory_tmp,  n,  n, voidMat_tmp, &V, 0,map_value).first;
             min = std::min(min, fit);
             Childs[i].fitness = fit;
             Population.push_back(Childs[i]);
         }
 
+        //second kill for useless individual with no fitness
+        /*
+        KillUselessPeople(Population);
+        printf("Population size %lu\n",Population.size());
+        while(Population.size() < NUMBER_INDIVIDUAL){
+            Individual indiv_tmp = generateRandom(NUMBER_GENE, TOT_patterns);
+            int fit = bfs_algo_program(indiv_tmp.instruction, indiv_tmp.pattern,memory_program, 0, memory,  n,  n, voidMat, &V, 0,map_value).first;
+            indiv_tmp.fitness = fit;
+            Population.push_back(indiv_tmp);
+        }*/
+
         printf("Time = %d MIN = %d, TOT_IND = %lu\n",time, min, Population.size());
 
         time += 1;
     }
+
+    printf("Genetic Algo END\n");
     
     std::sort(Population.begin(), Population.end(), [](Individual& a, Individual& b) {
-        return a.fitness > b.fitness;
+        return a.fitness < b.fitness;
     });
 
 
-    
-    auto start = std::chrono::high_resolution_clock::now();
+    //Population[1].instruction
+    //Population[0].pattern
     auto res_pair = bfs_algo_program(Population[1].instruction,Population[0].pattern, memory_program,0, memory,  n,  n, voidMat, &V, 0,map_value);
     auto end = std::chrono::high_resolution_clock::now();
     auto duration_sec = std::chrono::duration_cast<std::chrono::seconds>(end - start);
@@ -268,31 +302,6 @@ int main(int argc, char *argv[])
     printf("\n");
     auto prog_arr = parseString(res_pair.second);
     
-    
-
-    //std::vector<std::string> prog_arr = {"Nodes({2,1}{3,0}{3,1}{3,2}{2,0}{2,2})Instruction{square} len = {1}  Pattern = {3,3,4}\n"};
-    bool exec = false;
-    //Exectute program
-    if(exec){
-        auto void_mat_res = voidMat;
-        for(int i = 0; i < prog_arr.size(); ++i){
-            std::vector<int> pattern_t;
-            std::string prog_t;
-            int len;
-            std::vector<std::vector<int>> node_t;
-            getProg(prog_arr[i],&prog_t, &len,pattern_t,node_t);
-            printf("%s\n", buildInstruction(node_t,len,GET_INSTRUCTION[prog_t],pattern_t).c_str());
-            for(int j = 0; j < node_t.size(); ++j){
-                if(prog_t == "fill"){
-                    break;
-                }
-                executeInstruction(0, node_t[j][0],  node_t[j][1],GET_INSTRUCTION[prog_t],  len,  pattern_t, &V, &void_mat_res,map_value);
-            }
-            printArray(void_mat_res);
-            printf("\n");
-        }
-        printArray(void_mat_res);
-    }
     
         
 }
