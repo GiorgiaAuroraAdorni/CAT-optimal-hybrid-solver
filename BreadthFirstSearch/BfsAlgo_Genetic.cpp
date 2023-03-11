@@ -44,9 +44,6 @@ std::pair<int, std::string>  bfs_algo_program(std::vector<std::vector<int>> istr
         printf("BUG\n");
         return std::make_pair(10000, "no correct program");
     }
-    if(n_iter > 4){
-        return std::make_pair(10000, "no correct program");
-    }
     if(memory[id] != -1){                               // BASE CASE --> We have alsa visited this case
         return std::make_pair(memory[id], memory_program[id]);                              // return the value to reach the id-th state
     }                                           // ELSE CASE --> We need to compute the move to reach the state
@@ -107,22 +104,16 @@ std::pair<int, std::string>  bfs_algo_program(std::vector<std::vector<int>> istr
                                 if(copy_instruction){
                                     new_current_state = current_state; 
 
-                                    auto check_copy = checkForCopy(id, i,  j,instruction,  len,  pattern, end_solution, &new_current_state,value_index);
-                                    //std::vector<std::vector<int>> check_copy = {{i,j}}; 
-                                    
-
+                                    auto check_copy = checkForCopy(id, i,  j,instruction,  len,  pattern, end_solution, &new_current_state,value_index);                                    
                                     new_id = id;
                                     for(int ind_n = 0; ind_n < check_copy.size(); ++ind_n){
                                         i = check_copy[ind_n][0];
                                         j = check_copy[ind_n][1];
-                                        number_new = executeInstruction_number(0, i,  j,instruction,  len,  pattern, end_solution, &new_current_state);
+                                        
+                                        new_id = executeInstruction(new_id, check_copy[ind_n][0],check_copy[ind_n][1],instruction,  len,  pattern, end_solution, &new_current_state,value_index);
 
-                                        if(number_new <= 0){
-                                            continue;
-                                        }
 
                                         int prev_id = new_id;
-                                        new_id = executeInstruction(new_id, check_copy[ind_n][0],check_copy[ind_n][1],instruction,  len,  pattern, end_solution, &new_current_state,value_index);
 
                                         auto pair_rec = bfs_algo_program(istructions,patterns,memory_program, new_id, memory, n,m,new_current_state,end_solution,(n_iter+1),value_index);   
                                         int a = pair_rec.first;
@@ -131,8 +122,12 @@ std::pair<int, std::string>  bfs_algo_program(std::vector<std::vector<int>> istr
                                             best_prog =  actualProg + "\n" + pair_rec.second;
                                         } 
 
- 
-                                        min_value = std::min(min_value, (1+a));     //check if is better than actual min
+                                        if(n_iter == 1 && ind_n == check_copy.size()-1 && id == 1023 ){
+                                            printArray(new_current_state);
+                                            printf("num iter = %d\n",n_iter);
+                                        }
+
+                                        min_value = std::min(min_value, (1+a));
                                     }
                                     copy_instruction = false;
                                 }
@@ -157,8 +152,8 @@ std::pair<int, std::string>  bfs_algo_program(std::vector<std::vector<int>> istr
 
 int main(int argc, char *argv[])
 {   
-    std::string path = "./Graph/miniGraph_2.txt";
-    //std::string path = "./Graph/TestGraph.txt";
+    //std::string path = "./Graph/miniGraph_6.txt";
+    std::string path = "./Graph/TestGraph.txt";
     //read file and convert information into a matrix
     auto V = file_reader(path);
     int n = V.size();
@@ -201,7 +196,6 @@ int main(int argc, char *argv[])
     std::string start_prog = "";
 
 
-    
     int time = 0;
     std::vector<Individual> Population;
 

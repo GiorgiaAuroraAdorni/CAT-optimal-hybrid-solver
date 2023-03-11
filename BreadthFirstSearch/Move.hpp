@@ -100,6 +100,8 @@ int executeInstruction_number(int id, int node_i, int node_j, std::vector<int> i
     //minimal number to color
     int min_to_color = 0;
 
+    //check if color at leart one pixel
+    bool flag_check = false;
     //getTypeOfInst
     int type_of_inst = istruction[idx_istruct];
     istruction.erase(istruction.begin());
@@ -116,10 +118,13 @@ int executeInstruction_number(int id, int node_i, int node_j, std::vector<int> i
             id = id - 1;
             min_to_color -= 1;
         }
+
+
         //check if new node is correct and remove an uncorrect/non colored node
         if((*actualRes)[i][j] != (*mat)[i][j] && pattern[idx_pattern] == (*mat)[i][j]){
             id = id + 1;
             min_to_color += 1;
+            flag_check = true;
 
         }
         //update pattern index
@@ -137,24 +142,29 @@ int executeInstruction_number(int id, int node_i, int node_j, std::vector<int> i
             idx_istruct = 0;
         }
 
+
         //if the instruction is endend we break
         lengthOfInst -= 1;
         if(lengthOfInst == 0){
             break;
         }
 
+
+
         //check if you can do the move
         if(i >= (*mat).size() || i < 0 || j >= (*mat).size() || j < 0 || (*mat)[i][j] == -1){
             //printf("end MOve\n");
             return -10000;
         }
-
+        
     }
     if(min_to_color < 0){
         id = -10000;
     }
     //printf("end MOve\n");
-
+    if(flag_check == false){
+        return -1000;
+    }
     return id;
 }
 
@@ -166,20 +176,20 @@ std::vector<std::vector<int>> checkForCopy(int id, int node_i, int node_j, std::
     std::vector<std::vector<int>> result;
     std::vector<std::vector<std::vector<int>>> result_tmp;
     int max_len = mat->size() > 5 ? mat->size() : 5;
-    for(int i = 0; i <= max_len; ++i){
+    for(int i = 0; i <= (max_len); ++i){
         result_tmp.push_back({});
     }
     int count = 0;
     for(int i = 0; i < mat->size(); ++i){
         for(int j = 0; j < mat->size(); ++j){
-            if((*actualRes)[i][j] == 0){
-                if((*mat)[i][j] == pattern[0]){
-                    int tmp_res = executeInstruction_number(0,i, j,istruction,lengthOfInst,pattern,mat,actualRes);
-                    if(tmp_res > 0){
-                        result_tmp[tmp_res-1].push_back({i,j});
-                        count += 1;
-                    }
+            if((*actualRes)[i][j] == 0 || (*actualRes)[i][j] == 5){
+                
+                int tmp_res = executeInstruction_number(0,i, j,istruction,lengthOfInst,pattern,mat,actualRes);
+                if(tmp_res > 0){
+                    result_tmp[tmp_res].push_back({i,j});
+                    count += 1;
                 }
+                
             }
         }
     }
@@ -187,12 +197,12 @@ std::vector<std::vector<int>> checkForCopy(int id, int node_i, int node_j, std::
     for(int i = 0; i < result_tmp.size(); ++i){
         auto tmp_result_to_order = result_tmp[i];
         for(int a = 0; a < tmp_result_to_order.size(); ++a){
-            
             for(int b = a+1; b < tmp_result_to_order.size(); b++){
                 auto Res_tmp = (*actualRes);
-                int tmp_id = executeInstruction(0, tmp_result_to_order[a][0],  tmp_result_to_order[a][1],istruction, lengthOfInst,  pattern, mat, &Res_tmp,value_index);
-                tmp_id = executeInstruction(0, tmp_result_to_order[b][0],  tmp_result_to_order[b][1],istruction, lengthOfInst,  pattern, mat, &Res_tmp,value_index);
-                if(tmp_id < 0){
+                int tmp_numb_1 = executeInstruction(0, tmp_result_to_order[a][0],  tmp_result_to_order[a][1],istruction, lengthOfInst,  pattern, mat, &Res_tmp,value_index);
+                int tmp_numb_2 = executeInstruction_number(0, tmp_result_to_order[b][0],  tmp_result_to_order[b][1],istruction, lengthOfInst,  pattern, mat, &Res_tmp);
+
+                if(tmp_numb_2 <= 0){
                     auto tmp = tmp_result_to_order[a];
                     tmp_result_to_order[a] = tmp_result_to_order[b];
                     tmp_result_to_order[b] = tmp;
@@ -207,6 +217,7 @@ std::vector<std::vector<int>> checkForCopy(int id, int node_i, int node_j, std::
 
     return result;
 }
+
 
 
 int checkAllColor(std::vector<std::vector<int>> * mat, std::vector<std::vector<int>> * actualRes){
@@ -231,7 +242,7 @@ int checkAllColor(std::vector<std::vector<int>> * mat, std::vector<std::vector<i
 
 
 
-int executeInstruction_number_debug(int id, int node_i, int node_j, std::vector<int> istruction, int lengthOfInst, std::vector<int> pattern, std::vector<std::vector<int>> * mat, std::vector<std::vector<int>> * actualRes){
+int executeInstruction_number_2(int id, int node_i, int node_j, std::vector<int> istruction, int lengthOfInst, std::vector<int> pattern, std::vector<std::vector<int>> * mat, std::vector<std::vector<int>> * actualRes){
     //printf("start MOve\n");
     int n = mat->size();
     //initialization of parameter
