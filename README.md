@@ -19,6 +19,7 @@ The program takes an .txt file containing a cat array as input, and prints the n
 | minGraph_4 |         2        |
 | minGraph_5 |         2        |
 | minGraph_6 |         1        |
+| TestGraph  |         2        | 
 
 
 
@@ -27,7 +28,7 @@ The program takes an .txt file containing a cat array as input, and prints the n
 | Name Graph | Total Number Move |  Total Time    |
 |------------|------------------|
 | minGraph_1 |         2        |                 |
-| minGraph_2 |         2        |         6:30        |
+| minGraph_2 |         2        |         6:30    |
 | minGraph_3 |         2        |                 |
 | minGraph_4 |         2        |                 |
 | minGraph_5 |         2        |                 |

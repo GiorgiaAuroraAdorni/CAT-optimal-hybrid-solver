@@ -298,6 +298,53 @@ std::vector<std::vector<int>> checkForCopy(int id, int node_i, int node_j, std::
 }
 
 
+std::vector<std::vector<int>> checkForCopy_2(int id, int node_i, int node_j, std::vector<int> istruction, int lengthOfInst, std::vector<int> pattern, std::vector<std::vector<int>> * mat, std::vector<std::vector<int>> * actualRes,std::vector<int> & value_index){
+    //return {{node_i,node_j}};
+    std::vector<std::vector<int>> result;
+    std::vector<std::vector<std::vector<int>>> result_tmp;
+    int max_len = mat->size() > 5 ? mat->size() : 5;
+    for(int i = 0; i <= (max_len); ++i){
+        result_tmp.push_back({});
+    }
+    int count = 0;
+    for(int i = 0; i < mat->size(); ++i){
+        for(int j = 0; j < mat->size(); ++j){
+            if((*actualRes)[i][j] == 0 || (*actualRes)[i][j] == 5){
+                
+                int tmp_res = executeInstruction_number(0,i, j,istruction,lengthOfInst,pattern,mat,actualRes);
+                if(tmp_res > 0){
+                    result_tmp[tmp_res].push_back({i,j});
+                    count += 1;
+                }
+                
+            }
+        }
+    }
+
+    for(int i = 0; i < result_tmp.size(); ++i){
+        auto tmp_result_to_order = result_tmp[i];
+        for(int a = 0; a < tmp_result_to_order.size(); ++a){
+            for(int b = a+1; b < tmp_result_to_order.size(); b++){
+                auto Res_tmp = (*actualRes);
+                int tmp_numb_1 = executeInstruction(0, tmp_result_to_order[a][0],  tmp_result_to_order[a][1],istruction, lengthOfInst,  pattern, mat, &Res_tmp,value_index);
+                int tmp_numb_2 = executeInstruction_number(0, tmp_result_to_order[b][0],  tmp_result_to_order[b][1],istruction, lengthOfInst,  pattern, mat, &Res_tmp);
+
+                if(tmp_numb_2 <= 0){
+                    auto tmp = tmp_result_to_order[a];
+                    tmp_result_to_order[a] = tmp_result_to_order[b];
+                    tmp_result_to_order[b] = tmp;
+                }
+            }
+        }
+        for(int j = 0; j < tmp_result_to_order.size(); ++j){
+            result.push_back(tmp_result_to_order[j]);
+        }
+    }
+
+
+    return result;
+}
+
 
 int checkAllColor(std::vector<std::vector<int>> * mat, std::vector<std::vector<int>> * actualRes){
     int only_color = -1;
@@ -352,15 +399,9 @@ int executeInstruction_number_2(int id, int node_i, int node_j, std::vector<int>
         //printf("i = %d,  j = %d , idx_inst = %d, idx_patt = %d, len_inst = %d\n",i,j, idx_istruct, idx_pattern, lengthOfInst);
         //check if a non correct node overlapp on a correct node  
         if((*actualRes)[i][j] == (*mat)[i][j] && pattern[idx_pattern] != (*mat)[i][j]){
-            id = id - 1;
-            min_to_color -= 1;
+            return -1;
         }
-        //check if new node is correct and remove an uncorrect/non colored node
-        if((*actualRes)[i][j] != (*mat)[i][j] && pattern[idx_pattern] == (*mat)[i][j]){
-            id = id + 1;
-            min_to_color += 1;
-
-        }
+        
         //update pattern index
         idx_pattern += 1;
         if(idx_pattern >= pattern.size()){
@@ -385,14 +426,10 @@ int executeInstruction_number_2(int id, int node_i, int node_j, std::vector<int>
         //check if you can do the move
         if(i >= (*mat).size() || i < 0 || j >= (*mat).size() || j < 0 || (*mat)[i][j] == -1){
             //printf("end MOve\n");
-            return -10000;
+            return -1;
         }
 
     }
-    if(min_to_color <= 0){
-        id = -10000;
-    }
-    //printf("end MOve\n");
 
-    return id;
+    return 1;
 }

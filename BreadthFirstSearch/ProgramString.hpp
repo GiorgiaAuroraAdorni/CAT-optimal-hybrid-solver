@@ -3,7 +3,12 @@
 #include <vector>
 #include <sstream>
 #include <regex>
-
+std::string removeFirst12Chars(const std::string& str) {
+    if (str.length() <= 12) {
+        return "";
+    }
+    return str.substr(12);
+}
 
 std::string buildInstruction(std::vector<std::vector<int>> index_node, int len, std::vector<int> instruction, std::vector<int> pattern){
     std::string result = "Nodes(";
