@@ -35,103 +35,53 @@ std::vector<std::vector<int>> istructions = {{0,0,1},{0,1,0},{0,-1,1},{0,-1,-1},
 std::vector<std::vector<int>> patterns = {{4},{3},{4,3},{4,4,3},{4,3,3,3},{3,4},{3,3,4,4},{3,4,3,3},{3,4,3},{3,4,4,4}};
 
 
-std::pair<int, std::string>  bfs_algo_program(std::vector<std::string> & memory_program, int id, std::vector<int> & memory, int n, int m, std::vector<std::vector<int>> & current_state, std::vector<std::vector<int>> * end_solution, int n_iter, std::vector<int> & value_index){
-    if(id < 0){
-        printf("BUG\n");
-        return std::make_pair(10000000, "no correct program");
+
+std::pair<int, std::string>  bfs_algo_program_4(std::vector<std::vector<int>> istructions,std::vector<std::vector<int>> patterns, std::vector<std::string> & memory_program, int id, std::vector<int> & memory, int n, int m, std::vector<std::vector<int>> & current_state, std::vector<std::vector<int>> * end_solution, int n_iter, std::vector<int> & value_index){
+
+    if(memory[id] != -1){
+        return std::make_pair(memory[id], memory_program[id]);   
     }
-    if(n_iter > 4){
-        return std::make_pair(10000000, "no correct program");
-    }
-    if(memory[id] != -1){                               // BASE CASE --> We have alsa visited this case
-        return std::make_pair(memory[id], memory_program[id]);                              // return the value to reach the id-th state
-    }                                           // ELSE CASE --> We need to compute the move to reach the state
     int check_color = checkAllColor(end_solution, &current_state);
     if(check_color > 0){
         return std::make_pair(1, ("Nodes({0,0}){fill} len = {1}  Pattern = {"+std::to_string(check_color)+"}\n"));
     }
-    int min_value = 10000;//INFINITY; 
+
+    int min_value = 10000;
     std::string best_prog = "";
-    // We iterate, for every move, for every length of this move , for every patters, For every non colored Node
     for (int inst = 0; inst < istructions.size(); ++inst) {
+        
         const auto instruction = istructions[inst];
-        //If the move have a prefix length we set the length 1 else we need to iterate for every possibility
-        int max_len_move = instruction[0] == 2 ? 1: n;
-        int min_len_mov = ((instruction.size() == 3 && instruction[1] == 1 && instruction[1] == 0)|| instruction[0] == 2)? 1 : 2;
-        // TODO: int min_len_move to have only orizontal can have len 1
-        for(int len = max_len_move; len >= min_len_mov; --len){
-            for(int patt = 0; patt < patterns.size();++patt){
-                const auto pattern = patterns[patt];
-                if(instruction[0] == 0 &&  pattern.size() > len){
-                    continue;
-                }
-                bool copy_instruction = true;
+
+        for(int patt = 0; patt < patterns.size();++patt){
+            const auto pattern = patterns[patt];
+            int max_len_move = instruction[0] == 2 ? 1: n;
+            int min_len_mov = instruction[0] == 2 ? 1 : pattern.size();
+
+            for(int len = max_len_move; len >= min_len_mov; --len){
+                
                 for(int i = 0; i < n; ++i){
+
                     for(int j = 0; j < m; ++j){
-                        if(current_state[i][j] == 0 && pattern[0] == (*end_solution)[i][j]){
-                            auto new_current_state = current_state;         //Duplicate the state to avoid to modify the object for other iteration
-                            int number_new = executeInstruction_number(0, i,  j,instruction,  len,  pattern, end_solution, &new_current_state);
-                            
+                        if((current_state[i][j] == 0 ||  current_state[i][j] == 5)){
+                            int new_id = id;
+                            auto new_current_state = current_state;
+                            int number_new = executeInstruction_number(0, i,  j,instruction,  len,  pattern, end_solution, &current_state);
 
-                            if(number_new > 0){//If the result is accepted --> the function doesen't color outside the matrix
-                                               //AND the instruction which non removes more colors than it adds
-
-                                //check if we can do a copy and repeat of this move
-                                //but in all case we remove the last move for add into check_copy array
-
-                                std::vector<std::vector<int>> check_copy = {{i,j}};       
-                                //auto check_copy = checkForCopy(id, i,  j,instruction,  len,  pattern, end_solution, &new_current_state,value_index);
-                                int new_id = id;
-                                for(int ind_n = 0; ind_n < check_copy.size(); ++ind_n){
-                                    int prev_id = new_id;
-                                    new_id = executeInstruction(new_id, check_copy[ind_n][0],check_copy[ind_n][1],instruction,  len,  pattern, end_solution, &new_current_state,value_index);
-                                }
+                            if(number_new > 0){
+                                new_id = executeInstruction(new_id, i,j,instruction,  len,  pattern, end_solution, &new_current_state,value_index);
                                 
 
-                                //now we can call the recursion
-                                auto pair_rec = bfs_algo_program(memory_program, new_id, memory, n,m,new_current_state,end_solution,(n_iter+1),value_index);   
-                                int a = pair_rec.first;
-                                if(min_value > (1+a)){
-                                    auto actualProg = buildInstruction(check_copy,len,instruction,pattern);
+                                std::pair<int, std::string>  pair_rec = bfs_algo_program_4(istructions,patterns,memory_program, new_id, memory, n,m,new_current_state,end_solution,(n_iter+1),value_index);   
+                                
+                                auto actualProg2 = buildInstruction({{i,j}},len,instruction,pattern);
+                                int a = (12 == pair_rec.second.find(removeFirst12Chars(actualProg2)))? pair_rec.first : (pair_rec.first+1);
+                                
+
+                                if(min_value > a){
+                                    auto actualProg = actualProg2;
                                     best_prog =  actualProg + "\n" + pair_rec.second;
-                                }  
-                                    
-                                    
-                                min_value = std::min(min_value, (1+a));     //check if is better than actual min
-
-                                
-                                if(copy_instruction){
-                                    new_current_state = current_state; 
-
-                                    auto check_copy = checkForCopy(id, i,  j,instruction,  len,  pattern, end_solution, &new_current_state,value_index);
-                                    //std::vector<std::vector<int>> check_copy = {{i,j}}; 
-                                    
-
-                                    new_id = id;
-                                    for(int ind_n = 0; ind_n < check_copy.size(); ++ind_n){
-                                        i = check_copy[ind_n][0];
-                                        j = check_copy[ind_n][1];
-                                        number_new = executeInstruction_number(0, i,  j,instruction,  len,  pattern, end_solution, &new_current_state);
-
-                                        if(number_new <= 0){
-                                            continue;
-                                        }
-
-                                        int prev_id = new_id;
-                                        new_id = executeInstruction(new_id, check_copy[ind_n][0],check_copy[ind_n][1],instruction,  len,  pattern, end_solution, &new_current_state,value_index);
-
-                                        auto pair_rec = bfs_algo_program(memory_program, new_id, memory, n,m,new_current_state,end_solution,(n_iter+1),value_index);   
-                                        int a = pair_rec.first;
-                                        if(min_value > (1+a)){
-                                            auto actualProg = buildInstruction(check_copy,len,instruction,pattern);
-                                            best_prog =  actualProg + "\n" + pair_rec.second;
-                                        } 
-
- 
-                                        min_value = std::min(min_value, (1+a));     //check if is better than actual min
-                                    }
-                                    copy_instruction = false;
-                                }
+                                    min_value = a;
+                                } 
                             }
                         }
                     }
@@ -143,8 +93,8 @@ std::pair<int, std::string>  bfs_algo_program(std::vector<std::string> & memory_
     memory[id] = min_value;             //Set this state visited
     memory_program[id] = best_prog;
     return std::make_pair(min_value, best_prog);
-    
 }
+
 
 
 
@@ -153,8 +103,9 @@ std::pair<int, std::string>  bfs_algo_program(std::vector<std::string> & memory_
 
 int main(int argc, char *argv[])
 {   
-    std::string path = "./Graph/miniGraph_2.txt";
-    //std::string path = "./Graph/TestGraph.txt";
+    std::string filename = argv[1];
+    std::string path = "./Graph/" + filename;
+    
     //read file and convert information into a matrix
     auto V = file_reader(path);
     int n = V.size();
@@ -188,58 +139,13 @@ int main(int argc, char *argv[])
     memory[max_id] = 0;                                 //Set the value of complete colored case = 0, Used for the base case
     std::vector<std::string> memory_program(size,"");
 
-
-
-    
-   
-    /*
-    int len_mov = 2;
-    int id_2 = executeInstruction(0, 0,  0,{0,0,1},  len_mov,  {3}, &V, &voidMat,map_value);
-    printf("check colore = %d\n",checkAllColor(&V, &voidMat));
-    auto copy_tmp = checkForCopy(0, 0,  0,{0,0,1},  len_mov,  {3}, &V, &voidMat,map_value);
-    int prev_id = id_2;
-    for(int i = 0; i < copy_tmp.size(); ++i){
-        printf("copy into node %d, %d\n",copy_tmp[i][0],copy_tmp[i][1]);
-        id_2 = executeInstruction(id_2, copy_tmp[i][0],copy_tmp[i][1],{0,0,1},  len_mov,  {3}, &V, &voidMat,map_value);
-        if(id_2 < prev_id){
-            printArray(voidMat);
-            printf(" WOOOO = %d, %d\n", copy_tmp[i][0],copy_tmp[i][1]);
-        }
-        prev_id = id_2;
-    }
-    printf("check colore = %d\n",checkAllColor(&V, &voidMat));
-    printArray(voidMat);
-
-    auto result = buildInstruction({{0,0},{2,0},{3,0}}, len_mov,{0,0,1},{3} );
-    printf("instruction: \n%s\n, ID = %d\n", result.c_str(),id_2);
-    */
-    
-
-   /*
-    auto tmp_voidMat = voidMat;
-    int id_1 = executeInstruction(0, 2,  0,{2,-1,0,-1,0,0,1,0,1},  1,  {3,4,3}, &V, &tmp_voidMat,map_value);
-    id_1 = executeInstruction(id_1, 2,  1,{2,0,1,-1,0,0,-1},  1,  {3,4,4,4}, &V, &tmp_voidMat,map_value);
-    printf("ID = %d \n", id_1);
-    printArray(tmp_voidMat);
-    */
-
-    
-    /*
-    auto tmp_voidMat = voidMat;
-    int id_1 = executeInstruction(0, 2,  0,{2,-1,0,-1,0,0,1,0,1},  2,  {1,2,3,4}, &V, &tmp_voidMat,map_value);
-    id_1 = executeInstruction(id_1, 2,  1,{2,0,1,-1,0,0,-1},  1,  {3,1}, &V, &tmp_voidMat,map_value);
-    printf("ID = %d \n", id_1);
-    printArray(tmp_voidMat);
-    return 1;*/
-    
-    
     
     patterns = generatePatterns(4);
     std::string start_prog = "";
 
-    
+
     auto start = std::chrono::high_resolution_clock::now();
-    auto res_pair = bfs_algo_program(memory_program, 0, memory,  n,  n, voidMat, &V, 0,map_value);
+    auto res_pair = bfs_algo_program_4(istructions,patterns, memory_program, 0, memory,  n,  n, voidMat, &V, 0,map_value);
 
     auto end = std::chrono::high_resolution_clock::now();
     auto duration_sec = std::chrono::duration_cast<std::chrono::seconds>(end - start);
@@ -254,7 +160,7 @@ int main(int argc, char *argv[])
     
     
 
-    //std::vector<std::string> prog_arr = {"Nodes({2,1}{3,0}{3,1}{3,2}{2,0}{2,2})Instruction{square} len = {1}  Pattern = {3,3,4}\n"};
+    // Execute the program
     bool exec = false;
     //Exectute program
     if(exec){
@@ -280,5 +186,3 @@ int main(int argc, char *argv[])
     
         
 }
-
-//TODO bug square prima
