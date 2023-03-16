@@ -1,0 +1,36 @@
+
+struct VectorHash2 {
+  size_t operator()(const std::vector<int>& v) const {
+    std::hash<int> hasher;
+    size_t seed = 0;
+    for (int elem : v) {
+      seed ^= hasher(elem) + 0x9e3779b9 + (seed<<6) + (seed>>2);
+    }
+    return seed;
+  }
+};
+
+
+
+std::unordered_map<std::vector<int>, int, VectorHash2> LMOVE = {
+    {{2,-1,0,-1,0,0,-1,0,-1}, 1},
+    {{2,-1,0,-1,0,0,1,0,1}, 1},
+    {{2,0,-1,0,-1,-1,0,-1,0}, 1},
+    {{2,0,1,0,1,-1,0,-1,0}, 1},
+    {{0,-1,1,1,1}, 0},
+    {{0,1,1,-1,1}, 0},
+    {{1,1,1,1,-1}, 0},
+    {{1,1,-1,1,1}, 0},
+    {{0,0,1}, 0},
+    {{0,1,0}, 0},
+    {{0,-1,1},0},
+    {{0,-1,-1}, 0},
+    {{2,0,1,-1,0,0,-1}, 0}
+};
+
+
+                    if(LMOVE[instructions[inst]] == 1){
+                        if(pattern_res[0] != pattern_res[3]){
+                            flag = -1;    
+                        }
+                    }

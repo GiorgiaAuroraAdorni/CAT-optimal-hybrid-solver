@@ -9,6 +9,7 @@ struct VectorHash {
     }
 };
 
+
 std::unordered_map<std::vector<int>, std::string, VectorHash> GET_NAME_INSTRUCTION = {
     {{0,0,1}, "orizontal"},
     {{0,1,0}, "vertical"},
@@ -24,6 +25,10 @@ std::unordered_map<std::vector<int>, std::string, VectorHash> GET_NAME_INSTRUCTI
     {{1,1,1,1,-1}, "ZigZag-Vert-R-L"},
     {{1,1,-1,1,1}, "ZigZag-Vert-L-R"}
 };
+
+
+
+
 
 
 std::unordered_map<std::string, std::vector<int>> GET_INSTRUCTION = {

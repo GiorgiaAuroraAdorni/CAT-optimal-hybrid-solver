@@ -1,3 +1,4 @@
+
 int WRONG_COLOR = 5;
 int executeInstruction(int id, int node_i, int node_j, std::vector<int> istruction, int lengthOfInst, std::vector<int> pattern, std::vector<std::vector<int>> * mat, std::vector<std::vector<int>> * actualRes,std::vector<int> & value_index){
     //printf("start MOve\n");
@@ -442,4 +443,123 @@ int checkColorOne(int id, int node_i, int node_j, std::vector<int> istruction, i
         
     }
     return -1;
+}
+
+
+int getPattern(std::vector<int> & pattern_res, int node_i, int node_j, std::vector<int> istruction, int lengthOfInst, std::vector<std::vector<int>> * mat){
+    int n = mat->size();
+    int idx_istruct = 0;
+    int i = node_i;
+    int j = node_j;
+    int min_to_color = 0;
+    bool flag_check = false;
+    //getTypeOfInst
+    int type_of_inst = istruction[idx_istruct];
+    istruction.erase(istruction.begin());
+
+    if(type_of_inst == 2){
+        lengthOfInst = istruction.size()/2+1;
+    }
+    //run the istruction
+    while(true){
+        if((*mat)[i][j] == -1){
+            return -1;
+        }
+        pattern_res.push_back((*mat)[i][j]);
+
+        i += istruction[(idx_istruct)];
+        idx_istruct += 1;
+        j += istruction[(idx_istruct)];
+        idx_istruct += 1;
+        if(idx_istruct >= istruction.size()){
+            idx_istruct = 0;
+        }
+
+        lengthOfInst -= 1;
+        if(lengthOfInst == 0){
+            break;
+        }
+
+        if(i >= (*mat).size() || i < 0 || j >= (*mat).size() || j < 0 || (*mat)[i][j] == -1){
+            //printf("end MOve\n");
+            return -1;
+        }
+        
+    }
+    return 1;
+}
+
+
+struct VectorHash2 {
+  size_t operator()(const std::vector<int>& v) const {
+    std::hash<int> hasher;
+    size_t seed = 0;
+    for (int elem : v) {
+      seed ^= hasher(elem) + 0x9e3779b9 + (seed<<6) + (seed>>2);
+    }
+    return seed;
+  }
+};
+
+
+std::unordered_map<std::vector<int>, int, VectorHash2> LMOVE = {
+    {{2,-1,0,-1,0,0,-1,0,-1}, 1},
+    {{2,-1,0,-1,0,0,1,0,1}, 1},
+    {{2,0,-1,0,-1,-1,0,-1,0}, 1},
+    {{2,0,1,0,1,-1,0,-1,0}, 1},
+    {{0,-1,1,1,1}, 0},
+    {{0,1,1,-1,1}, 0},
+    {{1,1,1,1,-1}, 0},
+    {{1,1,-1,1,1}, 0},
+    {{0,0,1}, 0},
+    {{0,1,0}, 0},
+    {{0,-1,1},0},
+    {{0,-1,-1}, 0},
+    {{2,0,1,-1,0,0,-1}, 0}
+};
+
+
+
+
+std::pair<std::vector<std::vector<std::vector<std::vector<int>>>>, std::vector<std::vector<int>>> getPossibleMove(std::vector<std::vector<int>> instructions,std::vector<std::vector<int>> & mat){
+    std::vector<std::vector<std::vector<std::vector<int>>>> pattern_move = {};
+    std::vector<std::vector<int>> len_move = {};
+
+    for(int inst = 0; inst < instructions.size(); ++inst){
+
+        pattern_move.push_back({});
+        len_move.push_back({});
+
+        int min_len = instructions[inst][0] == 2 ? 1 : 1;
+        int max_len = instructions[inst][0] == 2 ? 1 : 6;
+        int len_idx = 0;
+        for(int len = min_len; len <= max_len; ++len){
+
+            pattern_move[inst].push_back({});
+            len_move[inst].push_back(len);
+            std::unordered_map<std::vector<int>, int, VectorHash2> checkArr;
+
+            for(int i = 0; i < mat.size(); ++i){
+                for(int j = 0; j < mat[0].size(); ++j){
+                    std::vector<int> pattern_res;
+                    int flag = getPattern(pattern_res,i, j, instructions[inst], len, &mat);
+                    
+                    if(flag == 1 && LMOVE[instructions[inst]] == 1){
+                        if(pattern_res[0] != pattern_res[4]){
+                            flag = -1;    
+                        }
+                    }
+
+                    if(flag == 1 && checkArr[pattern_res] != 1){
+                        pattern_move[inst][len_idx].push_back(pattern_res);
+                        checkArr[pattern_res] = 1;
+                    }
+                }
+            }
+            len_idx += 1;
+        }
+        
+    }
+
+    return std::make_pair(pattern_move,len_move);   
 }
