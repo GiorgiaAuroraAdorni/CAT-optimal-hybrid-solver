@@ -50,11 +50,20 @@ int FillWithPerfect(std::vector<std::vector<int>> index_nodes, std::vector<int> 
     return new_id;
 }
 
+int SECONDTOBREAK = 10;
 
-int getFitness(std::vector<std::vector<int>> old_best_node, std::vector<std::vector<int>> fake_hash_old,int minLevel, bool same_level, int current_id, int max_id, int number_inst, std::vector<std::vector<int>> instructions, std::vector<int> lengts, std::vector<std::vector<int>> patterns,std::vector<int> & memory,std::vector<std::vector<int>> & current_state,std::vector<std::vector<int>> & end_state, int n, int m, std::vector<int> & value_index){
+
+int getFitness(std::time_t start_time, std::vector<std::vector<int>> old_best_node, std::vector<std::vector<int>> fake_hash_old,int minLevel, bool same_level, int current_id, int max_id, int number_inst, std::vector<std::vector<int>> instructions, std::vector<int> lengts, std::vector<std::vector<int>> patterns,std::vector<int> & memory,std::vector<std::vector<int>> & current_state,std::vector<std::vector<int>> & end_state, int n, int m, std::vector<int> & value_index){
+    std::time_t current_time = std::time(nullptr);
+    std::time_t elapsed_time = current_time - start_time;
+    if (elapsed_time >= SECONDTOBREAK) {
+        return 100;
+    } 
+
     std::pair<std::vector<std::vector<int>> ,std::vector<std::vector<int>>> best_first;
     std::vector<std::vector<int>> node_pos;
     std::vector<std::vector<int>> fake_hash;
+
 
     if(!same_level && minLevel > number_inst){
         best_first = checkForBESTmove(instructions[number_inst], lengts[number_inst], patterns[number_inst],  &end_state, &current_state);
@@ -64,17 +73,19 @@ int getFitness(std::vector<std::vector<int>> old_best_node, std::vector<std::vec
         node_pos = old_best_node;
         fake_hash = fake_hash_old;
     }
+
     // END THE THIRD MOVE APPLIED
     if(number_inst == minLevel){
         int end_id = current_id;
         auto new_current_state = current_state;
         auto allCopy = checkForCopy(end_id, 0,0, instructions[number_inst], lengts[number_inst], patterns[number_inst], &end_state, &new_current_state, value_index);
         
-
+        
         for(int i = 0; i < allCopy.size(); ++i){
             end_id = executeInstruction(end_id, allCopy[i][0],allCopy[i][1],instructions[number_inst],  lengts[number_inst],  patterns[number_inst], &end_state, &new_current_state,value_index);
         }
 
+        
         if(max_id != end_id){
             int check_max_col = 100;
             for(int i = 0; i < n; ++i){
@@ -89,7 +100,6 @@ int getFitness(std::vector<std::vector<int>> old_best_node, std::vector<std::vec
         return (minLevel+1);
     }
 
-
     //CHECK WITH ONLY PERFECT COPY
     int current_best_1 = 1000;
     if(!same_level){
@@ -99,10 +109,11 @@ int getFitness(std::vector<std::vector<int>> old_best_node, std::vector<std::vec
         if(new_id_f == max_id){
             return (number_inst + 1);
         }
-        current_best_1 = getFitness({{}},{{}},minLevel, false, new_id_f, max_id, (number_inst+1), instructions, lengts, patterns, memory, new_current_state_f, end_state, n,  m,value_index);
+        current_best_1 = getFitness(start_time,{{}},{{}},minLevel, false, new_id_f, max_id, (number_inst+1), instructions, lengts, patterns, memory, new_current_state_f, end_state, n,  m,value_index);
         
     }
     
+
 
     //STAGE RECURSIVE
     int best = current_best_1;
@@ -111,12 +122,15 @@ int getFitness(std::vector<std::vector<int>> old_best_node, std::vector<std::vec
             if(current_state[i][j] == -1){
                 continue;
             }
-            if(fake_hash.size() >= 0 && fake_hash[i][j] != -1){
+            if(fake_hash.size()> 0 && fake_hash[i][j] != -1){
                 auto new_current_state = current_state;
+                
+                
 
                 //If move doesn't Color Continue
                 int checkColor = checkColorOne(current_id, i, j,  instructions[number_inst], lengts[number_inst], patterns[number_inst], &end_state,  &new_current_state);
                 
+               
                 
                 if(checkColor < 0){
                     continue;
@@ -125,23 +139,25 @@ int getFitness(std::vector<std::vector<int>> old_best_node, std::vector<std::vec
 
                 //Now execute new instruction
                 int new_id = executeInstruction(current_id, i,j,instructions[number_inst],  lengts[number_inst],  patterns[number_inst], &end_state, &new_current_state,value_index);
+                
+                
+                if(new_id == current_id){
+                    continue;
+                }
                 if(new_id < 0){
                     continue;
                 }
-                if(new_id == current_id ){
-                    continue;
-                }
+
+                
                 //IF we already see the coloration continue, this branch we have already compute
                 
-
- 
 
                 memory[new_id] = 1;
                 auto current_fake_hash = fake_hash;
                 current_fake_hash[i][j] = -1;
 
                 //iterate on the same three-level
-                int current_best_2 = getFitness(node_pos,current_fake_hash,minLevel, true, new_id, max_id, number_inst, instructions, lengts, patterns, memory, new_current_state, end_state, n,  m,value_index);
+                int current_best_2 = getFitness(start_time,node_pos,current_fake_hash,minLevel, true, new_id, max_id, number_inst, instructions, lengts, patterns, memory, new_current_state, end_state, n,  m,value_index);
 
                 
                 //Before start new level of three we need to fill with perfect color (doesn't remove any coloration)
@@ -150,9 +166,10 @@ int getFitness(std::vector<std::vector<int>> old_best_node, std::vector<std::vec
                     return (number_inst + 1);
                 }
 
+
                 //iterate into new level
 
-                int current_best_1 = (memory[new_id] != -1) ? 100 : getFitness({{}},{{}},minLevel, false, new_id, max_id, (number_inst+1), instructions, lengts, patterns, memory, new_current_state, end_state, n,  m,value_index);
+                int current_best_1 = (memory[new_id] != -1) ? 100 : getFitness(start_time,{{}},{{}},minLevel, false, new_id, max_id, (number_inst+1), instructions, lengts, patterns, memory, new_current_state, end_state, n,  m,value_index);
 
                 int current_best = std::min(current_best_1,current_best_2);
                 if(best > current_best){
@@ -161,25 +178,11 @@ int getFitness(std::vector<std::vector<int>> old_best_node, std::vector<std::vec
                 
 
 
+            }else{
             }
         }
     }
     return best;
-}
-
-
-
-std::vector<std::vector<int>> combinations(int n) {
-    std::vector<std::vector<int>> result;
-    std::vector<int> temp(n);
-    for (int i = 0; i < n; i++) {
-        temp[i] = i;
-    }
-    result.push_back(temp);
-    while (next_permutation(temp.begin(), temp.end())) {
-        result.push_back(temp);
-    }
-    return result;
 }
 
 
@@ -262,6 +265,8 @@ std::vector<int> findTopMIndices(const std::vector<double>& expectationFirst, in
 int main(int argc, char *argv[])
 {   
     //TODO 4
+    std::time_t start_algo = std::time(nullptr);
+    
     std::ios_base::sync_with_stdio(false);
 
     //3 solo 3 e non 2 PERCHE la sol non ha i primi numeri :)
@@ -312,6 +317,7 @@ int main(int argc, char *argv[])
     
 
     //DEBUG
+    /*
     Instruction A;
     Instruction B;
     Instruction C;
@@ -336,7 +342,7 @@ int main(int argc, char *argv[])
     printf("%d\n",fit);
 
     return 1;
-
+    */
 
 
 
@@ -390,7 +396,10 @@ int main(int argc, char *argv[])
 
     for(int i = 0; i < similaVec2.size(); ++i){
         bool flag = true;
-
+        First_cluster.push_back(i);
+        Secon_cluster.push_back(i);
+        Third_cluster.push_back(i);
+        continue;
         if(similaVec1[i] >= MIN_SIMILARITY){
             First_cluster.push_back(i);
             flag = false;
@@ -469,20 +478,22 @@ int main(int argc, char *argv[])
                 auto memory_tmp = memory;
                 auto void_mat_tmp = voidMat;
 
-                int current_fit = getFitness({{}}, {{}},min_layer, false, 0,  max_id, 0, instructions, lengs, patterns, memory_tmp, void_mat_tmp, V, n, n, map_value);
+                std::time_t start_time = std::time(nullptr);
+                int current_fit = getFitness(start_time,{{}}, {{}},min_layer, false, 0,  max_id, 0, instructions, lengs, patterns, memory_tmp, void_mat_tmp, V, n, n, map_value);
                 
 
-                if(min > current_fit){
+                if(current_fit <= 2){
+                    min_layer = 0;
+                    TIME = 0;
                     min = current_fit;
-                    if(min < 4){
-                        if(min == 1){
-                            break;
-                        }
-                        min_layer = current_fit - 2;
-                    }
+                    break;
                 }
+                if(current_fit == 3){
+                    min_layer = 1;
+                }
+                min = std::min(min, current_fit);
                 sum_tmp += current_fit;
-                
+                printf("m %d    %d\n", min,min_layer);
                 
             }
 
@@ -491,7 +502,11 @@ int main(int argc, char *argv[])
 
 
 
-        
+        if(min <= 2){
+            TIME = 0;
+            break;
+        }
+        printf("START2\n");
 
         auto top_int = findTopMIndices(expectationFirst, 5);
 
@@ -519,22 +534,53 @@ int main(int argc, char *argv[])
                 
                 auto memory_tmp = memory;
                 auto void_mat_tmp = voidMat;
-                int current_sol = getFitness({{}}, {{}},min_layer, false, 0,  max_id, 0, instructions, lengs, patterns, memory_tmp, void_mat_tmp, V, n, n, map_value);
+                std::time_t start_time = std::time(nullptr);
+                int current_sol = getFitness(start_time,{{}}, {{}},min_layer, false, 0,  max_id, 0, instructions, lengs, patterns, memory_tmp, void_mat_tmp, V, n, n, map_value);
                 
-                if(min > current_sol){
+                if(current_sol <= 2){
+                    min_layer = 0;
                     min = current_sol;
-                    if(min == 1){
-                        break;
-                    }
-                    min_layer = current_sol - 2;
+                    TIME = 0;
+                    break;
                 }
+                if(current_sol == 3){
+                    min_layer = 1;
+                }
+                min = std::min(min, current_sol);
             }
         }
 
+        if(min <= 2){
+            TIME = 0;
+            break;
+        }
         printf("min = %d\n", min);
 
         TIME -= 1;
     }
+
+    for(int i = 0; i  < Moves.size(); ++i){
+        std::vector<std::vector<int> > instructions = {Moves[i].instruction};
+        std::vector<std::vector<int> > patterns = {Moves[i].pattern};
+        std::vector<int> lengs = {Moves[i].len};
+        
+        auto memory_tmp = memory;
+        auto void_mat_tmp = voidMat;
+        std::time_t start_time = std::time(nullptr);
+        int current_sol = getFitness(start_time,{{}}, {{}},min_layer, false, 0,  max_id, 0, instructions, lengs, patterns, memory_tmp, void_mat_tmp, V, n, n, map_value);
+        
+        min = std::min(min, current_sol);
+
+        if(min == 1){
+            break;
+        }
+    }
+    
+
+    std::time_t current_algo = std::time(nullptr);
+    std::time_t elapsed_algo = current_algo - start_algo;
+
+    printf("BEST = %d, Time = %ld \n", min,elapsed_algo);
 
 
     return 1;
