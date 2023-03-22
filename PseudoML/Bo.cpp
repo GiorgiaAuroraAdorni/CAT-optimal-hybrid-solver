@@ -111,7 +111,7 @@ int getFitness(std::vector<std::vector<int>> old_best_node, std::vector<std::vec
             if(current_state[i][j] == -1){
                 continue;
             }
-            if(fake_hash.size()> 0 && fake_hash[i][j] != -1){
+            if(fake_hash.size() >= 0 && fake_hash[i][j] != -1){
                 auto new_current_state = current_state;
 
                 //If move doesn't Color Continue
@@ -128,9 +128,13 @@ int getFitness(std::vector<std::vector<int>> old_best_node, std::vector<std::vec
                 if(new_id < 0){
                     continue;
                 }
+                if(new_id == current_id ){
+                    continue;
+                }
                 //IF we already see the coloration continue, this branch we have already compute
                 
 
+ 
 
                 memory[new_id] = 1;
                 auto current_fake_hash = fake_hash;
@@ -260,9 +264,9 @@ int main(int argc, char *argv[])
     //TODO 4
     std::ios_base::sync_with_stdio(false);
 
-    //3 solo 3 e non 2
+    //3 solo 3 e non 2 PERCHE la sol non ha i primi numeri :)
     //2 troppo lento
-    //std::string path = "./Graph/miniGraph_1.txt";
+    //std::string path = "./Graph/miniGraph_3.txt";
     std::string path = "./Graph/testGraph.txt";
     //read file and convert information into a matrix
     auto V = file_reader(path);
@@ -306,31 +310,32 @@ int main(int argc, char *argv[])
     auto allPssibleCombination = getPossibleMove(TOT_istructions ,V);
 
     
-/*
+
     //DEBUG
     Instruction A;
     Instruction B;
     Instruction C;
 
-    A.instruction = {0, 0,1};
-    B.instruction = {0, 0,1};
-    C.instruction = {0, 0,1};
-    A.pattern = {3,4};
-    B.pattern = {4};
-    C.pattern = {4,3};
-    A.len = 2;
-    B.len = 1;
-    C.len = 2;
+    A.instruction = {2, 0, 1, -1, 0, 0, -1} ;
+    B.instruction = {0, 1, 0};
+    C.instruction = { };
+    A.pattern = {2,1,3,4};
+    B.pattern = {3, 1 };
+    C.pattern = {} ;
+    A.len = 1;
+    B.len = 2;
+    C.len = 0;
     
 
     std::vector<std::vector<int> > instructions = {A.instruction, B.instruction, C.instruction};
     std::vector<std::vector<int> > patterns = {A.pattern, B.pattern, C.pattern};
     std::vector<int> lengs = {A.len, B.len, C.len};
 
-    int current_sol = getFitness({{}}, {{}},0, false, 0,  max_id, 0, instructions, lengs, patterns, memory, voidMat, V, n, n, map_value);
-    printf("%d\n",current_sol);
+    int fit = getFitness({{}}, {{}},0, false, 0,  max_id, 0, instructions, lengs, patterns, memory, voidMat, V, n, n, map_value);
 
-    return 1;*/
+    printf("%d\n",fit);
+
+    return 1;
 
 
 
@@ -448,7 +453,6 @@ int main(int argc, char *argv[])
             int sum_tmp = 0;
 
                 
-
             for(int t = 0; t < TRIAL; ++t){
                 int random_one = distr2(gen);
                 int random_two = distr3(gen);
@@ -467,7 +471,6 @@ int main(int argc, char *argv[])
 
                 int current_fit = getFitness({{}}, {{}},min_layer, false, 0,  max_id, 0, instructions, lengs, patterns, memory_tmp, void_mat_tmp, V, n, n, map_value);
                 
-                
 
                 if(min > current_fit){
                     min = current_fit;
@@ -485,6 +488,8 @@ int main(int argc, char *argv[])
 
             expectationFirst[i] = static_cast<double>(sum_tmp)/(static_cast<double>(TRIAL));
         }
+
+
 
         
 

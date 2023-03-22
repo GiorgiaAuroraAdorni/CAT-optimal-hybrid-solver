@@ -621,7 +621,7 @@ std::vector<Instruction> getPossibleINST(std::vector<std::vector<int>> instructi
                     if(flag == 1 && checkArr[pattern_res] != 1){
                         tmpINST3.pattern = pattern_res;
                         res.push_back(tmpINST3);
-                        printInstruction(tmpINST3);
+                        //printInstruction(tmpINST3);
                         checkArr[pattern_res] = 1;
                     }
                 }

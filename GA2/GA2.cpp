@@ -8,22 +8,19 @@
 #include <cmath>
 #include <limits>
 #include <chrono>
-
+#include <ctime>
+#include <random>
 
 #include "./FileReader.hpp"
+#include "./instruction.hpp"
+#include "./individual.hpp"
 #include "./Move.hpp"
 #include "./Patterns.hpp"
 #include "./HashFile.hpp"
 #include "./ProgramString.hpp"
 
-#include "./Genetic/individual.hpp"
 
-int NUMBER_INDIVIDUAL = 100;
-int NUMBER_PARENT = 80;
-int NUMBER_GENE = 5;
-int NOTCOUNT = 100;
-
-
+double MIN_SIMILARITY = 0.75;
 
 
 
@@ -54,11 +51,19 @@ int FillWithPerfect(std::vector<std::vector<int>> index_nodes, std::vector<int> 
     return new_id;
 }
 
+int SECONDTOBREAK = 10;
 
-int getFitness(std::vector<std::vector<int>> old_best_node, std::vector<std::vector<int>> fake_hash_old,int minLevel, bool same_level, int current_id, int max_id, int number_inst, std::vector<std::vector<int>> instructions, std::vector<int> lengts, std::vector<std::vector<int>> patterns,std::vector<int> & memory,std::vector<std::vector<int>> & current_state,std::vector<std::vector<int>> & end_state, int n, int m, std::vector<int> & value_index){
+int getFitness(std::time_t start_time, std::vector<std::vector<int>> old_best_node, std::vector<std::vector<int>> fake_hash_old,int minLevel, bool same_level, int current_id, int max_id, int number_inst, std::vector<std::vector<int>> instructions, std::vector<int> lengts, std::vector<std::vector<int>> patterns,std::vector<int> & memory,std::vector<std::vector<int>> & current_state,std::vector<std::vector<int>> & end_state, int n, int m, std::vector<int> & value_index){
+    std::time_t current_time = std::time(nullptr);
+    std::time_t elapsed_time = current_time - start_time;
+    if (elapsed_time >= SECONDTOBREAK) {
+        return 100;
+    } 
+
     std::pair<std::vector<std::vector<int>> ,std::vector<std::vector<int>>> best_first;
     std::vector<std::vector<int>> node_pos;
     std::vector<std::vector<int>> fake_hash;
+
 
     if(!same_level && minLevel > number_inst){
         best_first = checkForBESTmove(instructions[number_inst], lengts[number_inst], patterns[number_inst],  &end_state, &current_state);
@@ -68,17 +73,19 @@ int getFitness(std::vector<std::vector<int>> old_best_node, std::vector<std::vec
         node_pos = old_best_node;
         fake_hash = fake_hash_old;
     }
+
     // END THE THIRD MOVE APPLIED
     if(number_inst == minLevel){
         int end_id = current_id;
         auto new_current_state = current_state;
         auto allCopy = checkForCopy(end_id, 0,0, instructions[number_inst], lengts[number_inst], patterns[number_inst], &end_state, &new_current_state, value_index);
         
-
+        
         for(int i = 0; i < allCopy.size(); ++i){
             end_id = executeInstruction(end_id, allCopy[i][0],allCopy[i][1],instructions[number_inst],  lengts[number_inst],  patterns[number_inst], &end_state, &new_current_state,value_index);
         }
 
+        
         if(max_id != end_id){
             int check_max_col = 100;
             for(int i = 0; i < n; ++i){
@@ -93,7 +100,6 @@ int getFitness(std::vector<std::vector<int>> old_best_node, std::vector<std::vec
         return (minLevel+1);
     }
 
-
     //CHECK WITH ONLY PERFECT COPY
     int current_best_1 = 1000;
     if(!same_level){
@@ -103,10 +109,11 @@ int getFitness(std::vector<std::vector<int>> old_best_node, std::vector<std::vec
         if(new_id_f == max_id){
             return (number_inst + 1);
         }
-        current_best_1 = getFitness({{}},{{}},minLevel, false, new_id_f, max_id, (number_inst+1), instructions, lengts, patterns, memory, new_current_state_f, end_state, n,  m,value_index);
+        current_best_1 = getFitness(start_time,{{}},{{}},minLevel, false, new_id_f, max_id, (number_inst+1), instructions, lengts, patterns, memory, new_current_state_f, end_state, n,  m,value_index);
         
     }
     
+
 
     //STAGE RECURSIVE
     int best = current_best_1;
@@ -117,10 +124,13 @@ int getFitness(std::vector<std::vector<int>> old_best_node, std::vector<std::vec
             }
             if(fake_hash.size()> 0 && fake_hash[i][j] != -1){
                 auto new_current_state = current_state;
+                
+                
 
                 //If move doesn't Color Continue
                 int checkColor = checkColorOne(current_id, i, j,  instructions[number_inst], lengts[number_inst], patterns[number_inst], &end_state,  &new_current_state);
                 
+               
                 
                 if(checkColor < 0){
                     continue;
@@ -129,19 +139,25 @@ int getFitness(std::vector<std::vector<int>> old_best_node, std::vector<std::vec
 
                 //Now execute new instruction
                 int new_id = executeInstruction(current_id, i,j,instructions[number_inst],  lengts[number_inst],  patterns[number_inst], &end_state, &new_current_state,value_index);
+                
+                
+                if(new_id == current_id){
+                    continue;
+                }
                 if(new_id < 0){
                     continue;
                 }
+
+                
                 //IF we already see the coloration continue, this branch we have already compute
                 
-
 
                 memory[new_id] = 1;
                 auto current_fake_hash = fake_hash;
                 current_fake_hash[i][j] = -1;
 
                 //iterate on the same three-level
-                int current_best_2 = getFitness(node_pos,current_fake_hash,minLevel, true, new_id, max_id, number_inst, instructions, lengts, patterns, memory, new_current_state, end_state, n,  m,value_index);
+                int current_best_2 = getFitness(start_time,node_pos,current_fake_hash,minLevel, true, new_id, max_id, number_inst, instructions, lengts, patterns, memory, new_current_state, end_state, n,  m,value_index);
 
                 
                 //Before start new level of three we need to fill with perfect color (doesn't remove any coloration)
@@ -150,9 +166,10 @@ int getFitness(std::vector<std::vector<int>> old_best_node, std::vector<std::vec
                     return (number_inst + 1);
                 }
 
+
                 //iterate into new level
 
-                int current_best_1 = (memory[new_id] != -1) ? 100 : getFitness({{}},{{}},minLevel, false, new_id, max_id, (number_inst+1), instructions, lengts, patterns, memory, new_current_state, end_state, n,  m,value_index);
+                int current_best_1 = (memory[new_id] != -1) ? 100 : getFitness(start_time,{{}},{{}},minLevel, false, new_id, max_id, (number_inst+1), instructions, lengts, patterns, memory, new_current_state, end_state, n,  m,value_index);
 
                 int current_best = std::min(current_best_1,current_best_2);
                 if(best > current_best){
@@ -161,6 +178,7 @@ int getFitness(std::vector<std::vector<int>> old_best_node, std::vector<std::vec
                 
 
 
+            }else{
             }
         }
     }
@@ -169,25 +187,15 @@ int getFitness(std::vector<std::vector<int>> old_best_node, std::vector<std::vec
 
 
 
-std::vector<std::vector<int>> combinations(int n) {
-    std::vector<std::vector<int>> result;
-    std::vector<int> temp(n);
-    for (int i = 0; i < n; i++) {
-        temp[i] = i;
-    }
-    result.push_back(temp);
-    while (next_permutation(temp.begin(), temp.end())) {
-        result.push_back(temp);
-    }
-    return result;
-}
-
 
 int main(int argc, char *argv[])
 {   
     //TODO 4
     std::ios_base::sync_with_stdio(false);
 
+    //3 solo 3 e non 2
+    //2 troppo lento
+    //std::string path = "./Graph/miniGraph_2.txt";
     std::string path = "./Graph/testGraph.txt";
     //read file and convert information into a matrix
     auto V = file_reader(path);
@@ -221,74 +229,65 @@ int main(int argc, char *argv[])
     int size = std::pow(2, total_colored);              //Memory have all possible combination of colore/no Color == 2^(n) with n = all colored cells
     std::vector<int> memory(size, -1);                  //Memory is initlized with -1 that means that this state is not reached in this moment
     memory[max_id] = 0;                                 //Set the value of complete colored case = 0, Used for the base case
-    std::vector<std::string> memory_program(size,"");
-
-
-
-
-/*
-    
-    std::vector<std::vector<int>>  inst2 = {{2, 0, 1, -1, 0, 0, -1, },{0, 0, 1, },{1, 1, 1, 1, -1, },};
-    std::vector<std::vector<int>>  patt2 = {{4, 4, 3, 3, },{3, },{3, },};
-    std::vector<int> len2 = {1,1,1};
-
-    auto start_p = std::chrono::high_resolution_clock::now();
-    printf("GAY\n");
-    auto fit =  getFitness({{}}, {{}},2, false, 0,  max_id, 0, inst2, len2, patt2, memory, voidMat, V, n, n, map_value);
-
-    
-
-    auto end_p = std::chrono::high_resolution_clock::now();
-    auto duration_sec_p = std::chrono::duration_cast<std::chrono::seconds>(end_p - start_p);
-    std::cout << "Tempo di esecuzione: " << duration_sec_p.count() << " secondi" << std::endl;
-
-    printf("%d fit\n", fit);
-    //printf("______________________________ Program ______________________________\n%s", fit.second.c_str());
-    return 1;*/
-    
-    
-
-
-
 
 
     
+
     
+    //TODO NON VEDO L
     std::vector<std::vector<int>> TOT_istructions = {{0,0,1},{0,1,0},{0,-1,1},{0,-1,-1},{2,0,1,-1,0,0,-1},{2,-1,0,-1,0,0,-1,0,-1},{2,-1,0,-1,0,0,1,0,1}, {2,0,-1,0,-1,-1,0,-1,0},{2,0,1,0,1,-1,0,-1,0},{0,-1,1,1,1},{0,1,1,-1,1},{1,1,1,1,-1},{1,1,-1,1,1}};
-    //std::vector<std::vector<int>> TOT_patterns = generatePatterns(4);
     std::string start_prog = "";
-
-
     
-    auto allPssibleCombination = getPossibleMove(TOT_istructions ,V);
+    auto Moves = getPossibleINST(TOT_istructions ,V);
 
-    
-    int time = 0;
-    int DEPTH = NUMBER_GENE - 1;
+
+    int NUMBER_INDIVIDUAL = 100;
+    int NUMBER_PARENT = 80;
+    int NUMBER_GENE = 3;
+    int TIME = 0;
+    int min_layer = 2;
     std::vector<Individual> Population;
+    Individual best_individuo;
 
-    printf("Initialization of individuals START\n");
     int min_best = 1000000;
 
+    std::time_t start_algo = std::time(nullptr);
+
     for(int i = 0; i < NUMBER_INDIVIDUAL; i++){
-        Individual indiv_tmp = generateRandom(NUMBER_GENE, allPssibleCombination.first, TOT_istructions, allPssibleCombination.second);
-        auto memory_program_tmp = memory_program;
+        Individual indiv_tmp = generateRandom(NUMBER_GENE, Moves);
+        
+        std::vector<std::vector<int> > instructions = {indiv_tmp.instruction[0].instruction, indiv_tmp.instruction[1].instruction, indiv_tmp.instruction[2].instruction};
+        std::vector<std::vector<int> > patterns = {indiv_tmp.instruction[0].pattern, indiv_tmp.instruction[1].pattern, indiv_tmp.instruction[2].pattern};
+        std::vector<int> lengs = {indiv_tmp.instruction[0].len, indiv_tmp.instruction[1].len, indiv_tmp.instruction[2].len};
+        
         auto memory_tmp = memory;
-        auto voidMat_tmp = voidMat;
-        int fit = getFitness({{}}, {{}},DEPTH, false, 0,  max_id, 0, indiv_tmp.instruction, indiv_tmp.lens, indiv_tmp.pattern, memory, voidMat, V, n, n, map_value);
+        auto void_mat_tmp = voidMat;
+        
+
+        std::time_t start_time = std::time(nullptr);
+        int fit = getFitness(start_time,{{}}, {{}},min_layer, false, 0,  max_id, 0, instructions, lengs, patterns, memory_tmp, void_mat_tmp, V, n, n, map_value);
+                
+
         indiv_tmp.fitness = fit;
+
+        
+        if(fit == 3){
+            min_layer = 1;
+            best_individuo = indiv_tmp;
+        }
+        if(fit == 2){
+            min_layer = 0;
+            TIME = 100;
+            best_individuo = indiv_tmp;
+            break;
+        }          
+
         min_best = std::min(min_best, fit);
         Population.push_back(indiv_tmp);
     }
 
-    printf("Initialization of individuals COMPLETE\n");
-
-
-    printf("Genetic Algo START\n");
-    auto start = std::chrono::high_resolution_clock::now();
     
-    while(time < 100){
-        
+    while(TIME < 100){
         
         auto Parents = selectINdividuals(Population, NUMBER_PARENT);
         std::vector<Individual> Childs;
@@ -298,7 +297,7 @@ int main(int argc, char *argv[])
             auto p2 = Parents[Parents.size() - 1];
             Parents.pop_back();
             
-            auto child12 = reproduction(p1, p2, allPssibleCombination.first, TOT_istructions, allPssibleCombination.second);
+            auto child12 = reproduction(p1, p2, Moves);
 
             Childs.push_back(child12[0]);
             Childs.push_back(child12[1]);
@@ -309,28 +308,40 @@ int main(int argc, char *argv[])
         int min = 10000;
 
         for(int i = 0; i < Childs.size(); ++i){
-            auto memory_program_tmp = memory_program;
-            auto memory_tmp = memory;
-            auto voidMat_tmp = voidMat;
-            int fit = getFitness({{}}, {{}},DEPTH, false, 0,  max_id, 0, Childs[i].instruction, Childs[i].lens, Childs[i].pattern, memory, voidMat, V, n, n, map_value);
-            min = std::min(min, fit);
-            Childs[i].fitness = fit;
-            Population.push_back(Childs[i]);
-        }
+            
 
-        int killed = 0;
-        bool kill_mod = false;
-        if(false){
-            for(int i = 0; i < NUMBER_INDIVIDUAL; i++){
-                killed += 1;
-                Individual indiv_tmp = generateRandom(NUMBER_GENE, allPssibleCombination.first, TOT_istructions, allPssibleCombination.second);
-                auto memory_program_tmp = memory_program;
-                auto memory_tmp = memory;
-                auto voidMat_tmp = voidMat;
-                int fit = getFitness({{}}, {{}},DEPTH, false, 0,  max_id, 0, indiv_tmp.instruction, indiv_tmp.lens, indiv_tmp.pattern, memory, voidMat, V, n, n, map_value);
-                indiv_tmp.fitness = fit;
-                Population[i] = indiv_tmp;
+            Individual indiv_tmp = Childs[i];
+        
+            std::vector<std::vector<int> > instructions = {indiv_tmp.instruction[0].instruction, indiv_tmp.instruction[1].instruction, indiv_tmp.instruction[2].instruction};
+            std::vector<std::vector<int> > patterns = {indiv_tmp.instruction[0].pattern, indiv_tmp.instruction[1].pattern, indiv_tmp.instruction[2].pattern};
+            std::vector<int> lengs = {indiv_tmp.instruction[0].len, indiv_tmp.instruction[1].len, indiv_tmp.instruction[2].len};
+        
+            auto memory_tmp = memory;
+            auto void_mat_tmp = voidMat;
+            std::time_t start_time = std::time(nullptr);
+            int fit = getFitness(start_time, {{}}, {{}},min_layer, false, 0,  max_id, 0, instructions, lengs, patterns, memory_tmp, void_mat_tmp, V, n, n, map_value);
+          
+
+            indiv_tmp.fitness = fit;
+
+            
+            if(fit == 3){
+                min_layer = 1;
+                best_individuo = indiv_tmp;
             }
+            if(fit <= 2){
+                min_layer = 0;
+                TIME = 100;
+                best_individuo = indiv_tmp;
+                break;
+            }
+
+
+
+            
+            min_best = std::min(min_best, fit);
+            
+            Population.push_back(indiv_tmp);
         }
         
         
@@ -338,97 +349,43 @@ int main(int argc, char *argv[])
             return a.fitness < b.fitness;
         });
 
-        printf("Time = %d MIN = %d,Kill = %d, TOT_IND = %lu\n",time, Population[0].fitness,killed, Population.size());
+        printf("Time = %d MIN = %d, TOT_IND = %lu\n",TIME, Population[0].fitness, Population.size());
 
-        time += 1;
+        TIME += 1;
     }
 
-    printf("Genetic Algo END\n");
     
-    std::sort(Population.begin(), Population.end(), [](Individual& a, Individual& b) {
-        return a.fitness < b.fitness;
-    });
-
-    printf("BEST = %d\n", Population[0].fitness);
-    printIndividual(Population[0]);
-    /*
-    auto res_pair = bfs_algo_program(Population[1].instruction,Population[0].pattern, memory_program,0, memory,  n,  n, voidMat, &V, 0,map_value);
-    auto end = std::chrono::high_resolution_clock::now();
-    auto duration_sec = std::chrono::duration_cast<std::chrono::seconds>(end - start);
-    std::cout << "Tempo di esecuzione: " << duration_sec.count() << " secondi" << std::endl;
+    // std::sort(Population.begin(), Population.end(), [](Individual& a, Individual& b) {
+    //     return a.fitness < b.fitness;
+    // });
 
 
-    int res = res_pair.first;
-    printf("value Final = %d\n", res);
-    printf("______________________________ Program ______________________________\n%s", res_pair.second.c_str());
-    printf("\n");
-    auto prog_arr = parseString(res_pair.second);
-    */
-   return 1;
-    
-
-
-
-
-
-
-
-
-    /*
-    std::vector<std::vector<int>> instuhda = {{0,1,0},{2,0,1,-1,0,0,-1}};
-    auto aslkdj = getPossibleMove(instuhda ,V);
-    
-    for(int i = 0; i < instuhda.size(); ++i ){
-        printf("MOVE %d \n\n", i);
-        for(int j = 0; j < aslkdj.second.size(); ++j){
-            printf("LEN %d \n", aslkdj.second[i][j]);
-            for(int a = 0; a < aslkdj.first[i].size(); ++a){
-                for(int b = 0; b < aslkdj.first[i][a].size(); ++b){
-                    for(int c = 0; c < aslkdj.first[i][a][b].size(); ++c){
-                        printf("%d ", aslkdj.first[i][a][b][c]);
-                    }
-                    printf("\n");   
-                }
-                printf("\n");
-            }
-            printf("\n");
-        }
-        printf("\n");
-    }
-
-    return 1;
-    */
-
-
-
-   //DEBUG TODO
-  
-    /*
-    
-    std::vector<std::vector<int>>  inst = {{0,0,1},{2,0,1,-1,0,0,-1}};
-    std::vector<std::vector<int>>  patt = {{4,3},{2,1}};
-
-
-    std::vector<std::vector<int>>  inst2 = {{0,0,1},{0,0,1},{0,0,1}};
-    std::vector<std::vector<int>>  patt2 = {{4,3},{2,1},{3}};
-    std::vector<int> len2 = {2,2,1};
-
-    auto start_p = std::chrono::high_resolution_clock::now();
-
-    auto fit =  getFitness({{}}, {{}},2, false, 0,  max_id, 0, inst2, len2, patt2, memory, voidMat, V, n, n, map_value);
-
-    
-
-    auto end_p = std::chrono::high_resolution_clock::now();
-    auto duration_sec_p = std::chrono::duration_cast<std::chrono::seconds>(end_p - start_p);
-    std::cout << "Tempo di esecuzione: " << duration_sec_p.count() << " secondi" << std::endl;
-
-    printf("%d fit\n", fit);
-    //printf("______________________________ Program ______________________________\n%s", fit.second.c_str());
-    return 1;
-
-    */
+    for(int i = 0; i < Moves.size(); ++i){
+        printf("find new Best\n");
+        int end_id = 0;
+        auto new_current_state = voidMat;
+        auto allCopy = checkForCopy(end_id, 0,0, Moves[i].instruction, Moves[i].len, Moves[i].pattern, &V, &new_current_state, map_value);
         
+        for(int i = 0; i < allCopy.size(); ++i){
+            end_id = executeInstruction(end_id, allCopy[i][0],allCopy[i][1], Moves[i].instruction, Moves[i].len, Moves[i].pattern, &V, &new_current_state,map_value);
+        }
+
+        if(end_id == max_id){
+            best_individuo.instruction[0] = Moves[i];
+            best_individuo.fitness = 1;
+            break;
+        }
+    }
+
+    std::time_t current_algo = std::time(nullptr);
+    std::time_t elapsed_algo = current_algo - start_algo;
+
+    printf("BEST = %d, Time = %ld \n", best_individuo.fitness,elapsed_algo);
+    printInstruction(best_individuo.instruction[0]);
+    printInstruction(best_individuo.instruction[1]);
+    printInstruction(best_individuo.instruction[2]);
+
+    //printf("%f\n", (2 + )/10.0);
+    
 }
 
-//TODO bug square prima
