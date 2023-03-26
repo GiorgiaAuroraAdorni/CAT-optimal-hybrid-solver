@@ -55,7 +55,7 @@ int fillCheck(int n,  std::vector<std::vector<int>> & current_state, const std::
                 first_color = end_solution[i][j];
             }
 
-            if(current_state[i][j] == NO_COLOR || current_state[i][j]  != first_color){
+            if(current_state[i][j] == NO_COLOR || (current_state[i][j] != -1  && current_state[i][j]  != first_color)){
                 flag = false;
                 break;
             }
@@ -77,33 +77,63 @@ std::pair<int, std::string>  bfs_algo_program(std::vector<Instruction> Moves, in
         return std::make_pair(memory[id], memory_prog[id]);   
     }
 
-    int checkFill = fillCheck(n,current_state,end_solution);
-    if(checkFill > 0){
-        std::make_pair(1, ("fill Pattern = {"+std::to_string(checkFill)+"}\n"));
+    int check_color = checkAllColor(&end_solution, &current_state);
+    if(check_color > 0){
+        return std::make_pair(1, ("fill Pattern = {"+std::to_string(check_color)+"}\n"));
     }
 
 
     std::string best_prog = "";
-    int best_sol = INT_MAX;
+    int best_sol = 100000;
     for(int mov = 0; mov < Moves.size(); mov++){
         auto best_copy = checkForBESTmove(Moves[mov].instruction, Moves[mov].len, Moves[mov].pattern,  &end_solution, &current_state).first;
+        auto best_copy_mirror = sortInst(Moves[mov], best_copy, n,&end_solution, &current_state);
         int new_id = id;
         auto new_current_state = current_state;
         std::vector<std::vector<int>> current_used_node; 
         for(int i = 0; i < best_copy.size(); ++i){
             current_used_node.push_back({best_copy[i][0],best_copy[i][1]});
             new_id = executeInstruction(new_id, best_copy[i][0],best_copy[i][1],Moves[mov].instruction,   Moves[mov].len,   Moves[mov].pattern, &end_solution, &new_current_state,value_index);
-            auto current_res = bfs_algo_program(Moves, new_id,  n, new_current_state, end_solution, memory, memory_prog, value_index);
+            
+            if(i == best_copy.size() - 1 ){
+                auto current_res = bfs_algo_program(Moves, new_id,  n, new_current_state, end_solution, memory, memory_prog, value_index);
 
-            if(best_sol > (current_res.first + 1)){
-                best_prog =  createInst(current_used_node,Moves[mov]) + "\n" + current_res.second;
-                best_sol = (current_res.first + 1);
+                if(best_sol > (current_res.first + 1)){
+                    best_prog =  createInst(current_used_node,Moves[mov]) + "\n" + current_res.second;
+                    best_sol = (current_res.first + 1);
+                }
             }
-
         }
+        
+
+        // for(int i = 0; i < best_copy_mirror.size(); ++i){
+        //     std::vector<std::vector<int>> current_used_node; 
+        //     int new_id = id;
+        //     auto new_current_state = current_state;
+        //     bool mirror_x = (i == 0 || i == 1)? true : false;
+        //     bool mirror_y = (i == 0 || i == 2)? true : false;
+
+        //     for(int j = 0; j < best_copy_mirror[i].size(); ++j){
+        //         current_used_node.push_back({best_copy_mirror[i][j][0],best_copy_mirror[i][j][1]});
+
+        //         new_id = executeInstruction(new_id, best_copy_mirror[i][j][0],best_copy_mirror[i][j][1],Moves[mov].instruction,   Moves[mov].len,   Moves[mov].pattern, &end_solution, &new_current_state,value_index);
+
+        //         auto mirro_inst = mirrorInst(mirror_x, mirror_y, Moves[mov],best_copy_mirror[i][j][0],best_copy_mirror[i][j][1],n );
+        //         new_id = executeInstruction(new_id,mirro_inst.second[0],mirro_inst.second[1],mirro_inst.first.instruction,mirro_inst.first.len,mirro_inst.first.pattern, &end_solution, &new_current_state,value_index );
+
+        //         auto current_res = bfs_algo_program(Moves, new_id,  n, new_current_state, end_solution, memory, memory_prog, value_index);
+
+
+        //         if(best_sol > (current_res.first + 1)){
+        //             std::string mirror_type = (mirror_x && mirror_y) ? "Mirror H and V" : (mirror_x ? "Mirror V" : "Mirror H");
+        //             best_prog =  mirror_type + " "+createInst(current_used_node,Moves[mov]) + "\n" + current_res.second;
+        //             best_sol = (current_res.first + 1);
+        //         }
+        //     }
+
+        // }
 
     }
-
     memory[id] = best_sol;             //Set this state visited
     memory_prog[id] = best_prog;
     return std::make_pair(best_sol, best_prog);
@@ -122,8 +152,8 @@ int main(int argc, char *argv[])
 
     //3 solo 3 e non 2 PERCHE la sol non ha i primi numeri :)
     //2 troppo lento
-    //std::string path = "./Graph/miniGraph_6.txt";
-    std::string path = "./Graph/testGraph.txt";
+    std::string path = "./Graph/miniGraph_2.txt";
+    //std::string path = "./Graph/testGraph2.txt";
     //read file and convert information into a matrix
     auto V = file_reader(path);
     int n = V.size();
@@ -146,6 +176,34 @@ int main(int argc, char *argv[])
             }
         }
     }    
+
+    /*
+    
+    
+    Instruction A;
+    A.instruction = {2,0,1,-1,0,0,-1};
+    A.pattern = {3,4,2,1};
+    A.len = 1;
+    int i = 3;
+    int j = 0;
+
+    auto mirror_inst = mirrorInst(true, true, A,i,j,n );
+    executeInstruction(0, i,j,A.instruction,A.len , A.pattern , &V, &voidMat,map_value);
+    printInstruction(A);
+    printInstruction(mirror_inst.first);
+    printf("%d,%d\n", mirror_inst.second[0],mirror_inst.second[1]);
+    executeInstruction(0, mirror_inst.second[0],mirror_inst.second[1],mirror_inst.first.instruction,mirror_inst.first.len , mirror_inst.first.pattern , &V, &voidMat,map_value);
+    printArray(voidMat);*/
+
+    // Instruction A;
+    // A.instruction = {2,-1,0,-1,0,0,-1,0,-1};
+    // A.pattern = {1,2,3,4};
+    // A.len = 1;
+
+    // auto best_copy = checkForBESTmove(A.instruction, A.len, A.pattern,  &V, &voidMat).first;
+    // std::vector<std::vector<std::vector<int>>> best_copy_mirror = sortInst(A, best_copy, n,&V, &voidMat);
+    // printf("%lu\n", best_copy_mirror[0].size());
+    // return 1;
 
     //with the information we can cmpute the dimension of the max id of a state (for the full colored graph)
     //And we can also initialize the memory vector
@@ -184,6 +242,7 @@ int main(int argc, char *argv[])
 
     auto start = std::chrono::high_resolution_clock::now();
     Moves = getPossibleINST(TOT_istructions ,V);
+
     auto result = bfs_algo_program(Moves, 0,  n, voidMat, V, memory, memory_program, map_value);
 
     auto end = std::chrono::high_resolution_clock::now();

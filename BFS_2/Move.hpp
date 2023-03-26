@@ -633,3 +633,40 @@ std::vector<Instruction> getPossibleINST(std::vector<std::vector<int>> instructi
 
     return res;   
 }
+
+
+std::vector<std::vector<std::vector<int>>> sortInst(Instruction inst, std::vector<std::vector<int> > & nodes,int n, std::vector<std::vector<int> > * mat,std::vector<std::vector<int> > * actualRes){
+    std::vector<std::vector<std::vector<int>>>  res;
+    std::vector<std::vector<int>> nodes1 = {};
+    for(int i = 0; i  < nodes.size(); i++){
+        auto mirror_inst = mirrorInst(true, true, inst,nodes[i][0],nodes[i][1],n);
+        int tmp_res = checkCancelMove(0,mirror_inst.second[0], mirror_inst.second[1],mirror_inst.first.instruction,mirror_inst.first.len,mirror_inst.first.pattern,mat,actualRes);
+        if(tmp_res > 0){
+            nodes1.push_back({nodes[i][0],nodes[i][1]});
+        }
+    }
+
+    std::vector<std::vector<int>> nodes2 = {};
+    for(int i = 0; i  < nodes.size(); i++){
+        auto mirror_inst = mirrorInst(true, false, inst,nodes[i][0],nodes[i][1],n);
+        int tmp_res = checkCancelMove(0,mirror_inst.second[0], mirror_inst.second[1],mirror_inst.first.instruction,mirror_inst.first.len,mirror_inst.first.pattern,mat,actualRes);
+        if(tmp_res > 0){
+            nodes2.push_back({nodes[i][0],nodes[i][1]});
+        }
+    }
+
+    std::vector<std::vector<int>> nodes3 = {};
+    for(int i = 0; i  < nodes.size(); i++){
+        auto mirror_inst = mirrorInst(false, true, inst,nodes[i][0],nodes[i][1],n);
+        int tmp_res = checkCancelMove(0,mirror_inst.second[0], mirror_inst.second[1],mirror_inst.first.instruction,mirror_inst.first.len,mirror_inst.first.pattern,mat,actualRes);
+        if(tmp_res > 0){
+            nodes3.push_back({nodes[i][0],nodes[i][1]});
+        }
+    }
+
+    res.push_back(nodes1);
+    res.push_back(nodes2);
+    res.push_back(nodes3);
+
+    return res;
+}

@@ -6,6 +6,41 @@ public:
 };
 
 
+std::pair<Instruction, std::vector<int>> mirrorInst(bool mirror_x, bool mirror_y, Instruction inst, int i, int j, int n){
+    std::vector<int> coordinate;
+    if(mirror_y){
+        coordinate.push_back(n-i-1);
+    }else{
+        coordinate.push_back(i);
+    }
+
+    if(mirror_x){
+        coordinate.push_back(n-j-1);
+    }else{
+        coordinate.push_back(j);
+    }
+
+    auto instTmp = inst.instruction;
+    int idx = 1;
+    while(idx < instTmp.size()){
+        if(mirror_y){
+            instTmp[idx] = instTmp[idx] * -1;
+        }
+        idx += 1;
+
+        if(mirror_x){
+            instTmp[idx] = instTmp[idx] * -1;
+        }
+        idx += 1;
+    }
+
+    Instruction mirror_inst;
+    mirror_inst.instruction = instTmp;
+    mirror_inst.pattern = inst.pattern;
+    mirror_inst.len = inst.len;
+
+    return std::make_pair(mirror_inst, coordinate);
+}
 struct VectorHash {
     size_t operator()(const std::vector<int>& vec) const {
         std::hash<int> hasher;
