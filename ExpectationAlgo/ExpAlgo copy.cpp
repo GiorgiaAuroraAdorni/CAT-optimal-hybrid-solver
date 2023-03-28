@@ -340,19 +340,6 @@ int bfs_best(int minLevel, int max_id, std::vector<Instruction> Moves,std::vecto
 
 
 
-std::vector<std::vector<int>> find_bottom_k_indices(const std::vector<std::vector<double>>& matrix, int k) {
-    std::vector<std::vector<int>> result;
-    for (const auto& row : matrix) {
-        std::vector<int> indices(row.size());
-        std::iota(indices.begin(), indices.end(), 0);
-        std::partial_sort(indices.begin(), indices.begin() + k, indices.end(), [&](int i, int j) {
-            return row[i] < row[j];
-        });
-        result.push_back(std::vector<int>(indices.begin(), indices.begin() + k));
-    }
-    return result;
-}
-
 
 std::vector<std::pair<int, int>>  find_k_lowest_indices(const std::vector<std::vector<double>>& matrix, int k) {
     int n_rows = matrix.size();
@@ -389,29 +376,6 @@ int countDistinctNumbers(const std::vector<std::vector<int>> matrix) {
     }
     return distinctNumbers.size();
 }
-
-
-std::vector<std::vector<Instruction>> all_combinations(const std::vector<std::vector<Instruction>>& matrix) {
-    std::vector<std::vector<Instruction>> result;
-    int n = matrix.size();
-    std::vector<int> indices(n, 0);
-    while (indices[0] < matrix[0].size()) {
-        std::vector<Instruction> combination;
-        for (int i = 0; i < n; i++) {
-            combination.push_back(matrix[i][indices[i]]);
-        }
-        result.push_back(combination);
-        indices[n-1]++;
-        for (int i = n - 1; i > 0; i--) {
-            if (indices[i] == matrix[i].size()) {
-                indices[i-1]++;
-                indices[i] = 0;
-            }
-        }
-    }
-    return result;
-}
-
 
 int TOT_COLOR = 0;
 
@@ -547,7 +511,7 @@ int main(int argc, char *argv[])
     int EXPLOR_EX = 20;
     int EXPLORE_B = 50;
     int MIN_LEVEL = TOT_COLOR-2;
-    int BEST_CHOOS = 3;
+    int BEST_CHOOS = 4;
     int TOT_B_CHOO = 5;
     int min = TOT_COLOR;
     std::random_device rd;
@@ -626,41 +590,64 @@ int main(int argc, char *argv[])
 
         }
 
+        //get best k for expectation exploitation
+        auto best_value = find_k_lowest_indices(expect_matrix, BEST_CHOOS);
+        //get random l for exploration
+        while(best_value.size() < TOT_B_CHOO){
+            std::uniform_int_distribution<int> distr_tmp(0, clusters.size()-1);
+            int a = distr_tmp(gen);
+            std::discrete_distribution<> weighted_distrib(exp_inver_mat[a].begin(),(exp_inver_mat[a].begin()+ clusters[a].size()));
+            int k = weighted_distrib(gen);
+            best_value.push_back(std::make_pair(a,k));
 
-        auto best_value = find_bottom_k_indices(expect_matrix, BEST_CHOOS);
-        std::vector<std::vector<Instruction>> allInstruction;
+        }
+
+
+        for(int ppfj = 0;ppfj < BEST_CHOOS; ++ppfj){
+            printInstruction(Moves[clusters[best_value[ppfj].first][best_value[ppfj].second]]);
+            printf("\n");
+        }
+
         
+
         for(int i = 0; i < best_value.size(); ++i){
-            allInstruction.push_back({});
-            for(int j = 0; j < best_value[i].size(); ++j){
-                allInstruction[i].push_back(Moves[clusters[i][best_value[i][j]]]);
+
+            std::vector<Instruction> inst;
+            inst.push_back(Moves[clusters[best_value[i].first][best_value[i].second]]);
+            for(int j = 0; j < best_value.size(); ++j){
+                if(j == i){
+                    continue;
+                }
+                std::vector<Instruction> inst_2 = inst;
+                inst_2.push_back(Moves[clusters[best_value[j].first][best_value[j].second]]);
+
+                for(int k = 0; k < best_value.size(); ++k){
+                    if(j == k || i == k){
+                        continue;
+                    }
+                    std::vector<Instruction> inst_3 = inst_2;
+                    inst_3.push_back(Moves[clusters[best_value[k].first][best_value[k].second]]);
+
+                    auto memory_tmp = memory;
+                    auto void_mat_tmp = voidMat;
+                    int current_sol = bfs_best(MIN_LEVEL, max_id, inst_3, memory_tmp, void_mat_tmp, V, n, n, map_value);
+
+
+                    if(min > current_sol && min == 3){
+                        MIN_LEVEL = 1;
+                    }
+                    min = std::min(min, current_sol);
+                    printf("New sol = %d\n",current_sol);
+
+
+
+                    if(min == 1){
+                        TIME = 0;
+                        break;
+                    }
+                }
             }
         }
-
-        auto allCombination = all_combinations(allInstruction);
-        printf("%lu\n",allCombination.size());
-
-
-        for(int i = 0; i < allCombination.size(); ++i){
-            auto memory_tmp = memory;
-            auto void_mat_tmp = voidMat;
-            int current_sol = bfs_best(MIN_LEVEL, max_id, allCombination[i], memory_tmp, void_mat_tmp, V, n, n, map_value);
-
-
-            if(min > current_sol && min == 3){
-                MIN_LEVEL = 1;
-            }
-            min = std::min(min, current_sol);
-            printf("New sol = %d\n",current_sol);
-
-
-
-            if(min == 1){
-                TIME = 0;
-                break;
-            }
-        }
-                
 
 
 

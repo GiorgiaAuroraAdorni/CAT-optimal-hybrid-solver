@@ -633,3 +633,101 @@ std::vector<Instruction> getPossibleINST(std::vector<std::vector<int>> instructi
 
     return res;   
 }
+
+
+//TypeOFmirrir  --> 1 verticale e siamo a sinistra
+//              --> 2 verticale e siamo a destra
+//              --> 3 vorizzontale e siamo a sotto
+//              --> 4 vorizzontale e siamo a sopra
+
+std::pair<int, std::vector<std::vector<int>>> getMirrorVeritcalLeft(int old_id,std::vector<std::vector<int>> & resMat,std::vector<std::vector<int>> & currMat,std::vector<int> & value_index){
+    std::vector<std::vector<int>> res;
+    int new_id = old_id;
+    int n = resMat.size();
+    int m = n - 1;
+    for(int i = 0; i < n; ++i){
+        for(int j = 0; j < n/2; ++j){
+            if(currMat[i][j] == -1 || resMat[i][m-j] == -1){
+                continue;
+            }
+            if(resMat[i][m-j] == currMat[i][j]){
+                if(currMat[i][m-j] == 0 || currMat[i][m-j] == WRONG_COLOR){
+                    new_id += std::pow(2,value_index[i*n+(m-j)]);
+                }
+                currMat[i][m-j] = currMat[i][j];
+                res.push_back({i,j});
+            }
+        }
+    }
+    return std::make_pair(new_id,res);
+}
+
+
+std::pair<int, std::vector<std::vector<int>>> getMirrorVeritcalRig(int old_id,std::vector<std::vector<int>> & resMat,std::vector<std::vector<int>> & currMat,std::vector<int> & value_index){
+    std::vector<std::vector<int>> res;
+    int new_id = old_id;
+    int n = resMat.size();
+    int m = n - 1;
+    for(int i = 0; i < n; ++i){
+        for(int j = 0; j < n/2; ++j){
+            if(resMat[i][j] == -1 || currMat[i][m-j] == -1){
+                continue;
+            }
+            if(resMat[i][j] == currMat[i][m-j]){
+                if(currMat[i][j] == 0 || currMat[i][j] == WRONG_COLOR){
+                    new_id += std::pow(2,value_index[i*n+j]);
+                }
+                currMat[i][j] = currMat[i][m-j];
+                res.push_back({i,(m-j)});
+            }
+        }
+    }
+    return std::make_pair(new_id,res);
+}
+
+
+std::pair<int, std::vector<std::vector<int>>> getMirrorHorizontalTop(int old_id,std::vector<std::vector<int>> & resMat,std::vector<std::vector<int>> & currMat,std::vector<int> & value_index){
+    std::vector<std::vector<int>> res;
+    int new_id = old_id;
+    int n = resMat.size();
+    int m = n - 1;
+    for(int i = 0; i < n/2; ++i){
+        for(int j = 0; j < n; ++j){
+            if(currMat[i][j] == -1 || resMat[m-i][j] == -1){
+                continue;
+            }
+            if(resMat[m-i][j] == currMat[i][j]){
+                if(currMat[m-i][j] == 0 || currMat[m-i][j] == WRONG_COLOR){
+                    new_id += std::pow(2,value_index[(m-i)*n+j]);
+                }
+                currMat[m-i][j] = currMat[i][j];
+                res.push_back({i,j});
+            }
+        }
+    }
+    return std::make_pair(new_id,res);
+}
+
+
+
+std::pair<int, std::vector<std::vector<int>>> getMirrorHorizontalDown(int old_id,std::vector<std::vector<int>> & resMat,std::vector<std::vector<int>> & currMat,std::vector<int> & value_index){
+    std::vector<std::vector<int>> res;
+    int new_id = old_id;
+    int n = resMat.size();
+    int m = n - 1;
+    for(int i = 0; i < n/2; ++i){
+        for(int j = 0; j < n; ++j){
+            if(resMat[i][j] == -1 || currMat[m-i][j] == -1){
+                continue;
+            }
+            if(currMat[m-i][j] == resMat[i][j]){
+                if(currMat[i][j] == 0 || currMat[i][j] == WRONG_COLOR){
+                    new_id += std::pow(2,value_index[i*n+j]);
+                }
+                currMat[i][j] = currMat[m-i][j];
+                res.push_back({(m-i),j});
+            }
+        }
+    }
+    return std::make_pair(new_id,res);
+}
