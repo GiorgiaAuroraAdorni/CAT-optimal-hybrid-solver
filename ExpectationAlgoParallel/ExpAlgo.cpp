@@ -12,6 +12,8 @@
 #include <random>
 #include <algorithm>
 #include <unordered_set>
+#include <thread>
+
 
 #include "./FileReader.hpp"
 #include "./instruction.hpp"
@@ -305,7 +307,7 @@ int getFitnessPseudo(std::time_t start_time, std::vector<std::vector<int>> old_b
 }
 
 
-int bfs_spec(std::time_t start_time, std::vector<std::vector<int>> old_best_node, std::vector<std::vector<int>> fake_hash_old,int minLevel, bool same_level, int current_id, int max_id, int number_inst, std::vector<Instruction> Moves,std::vector<int> & memory,std::vector<std::vector<int>> & current_state,std::vector<std::vector<int>> & end_state, int n, int m, std::vector<int> & value_index){
+int bfs_spec(std::time_t start_time, std::vector<std::vector<int>> old_best_node, std::vector<std::vector<int>> fake_hash_old,int minLevel, bool same_level, int current_id, int max_id, int number_inst, std::vector<Instruction> Moves,std::vector<int> memory,std::vector<std::vector<int>> current_state,std::vector<std::vector<int>> end_state, int n, int m, std::vector<int> value_index){
     std::vector<std::vector<int> > instructions;
     std::vector<std::vector<int> > patterns;
     std::vector<int> lengs;
@@ -321,7 +323,7 @@ int bfs_spec(std::time_t start_time, std::vector<std::vector<int>> old_best_node
 }
 
 
-int bfs_best(int minLevel, int max_id, std::vector<Instruction> Moves,std::vector<int> & memory,std::vector<std::vector<int>> & current_state,std::vector<std::vector<int>> & end_state, int n, int m, std::vector<int> & value_index){
+int bfs_best(int minLevel, int max_id, std::vector<Instruction> Moves,std::vector<int> memory,std::vector<std::vector<int>> current_state,std::vector<std::vector<int>> end_state, int n, int m, std::vector<int> value_index){
     std::vector<std::vector<int> > instructions;
     std::vector<std::vector<int> > patterns;
     std::vector<int> lengs;
@@ -333,6 +335,18 @@ int bfs_best(int minLevel, int max_id, std::vector<Instruction> Moves,std::vecto
     }
     std::time_t start_time = std::time(nullptr);
     int res = getFitness(start_time, {{}}, {{}}, minLevel,  false, 0,  max_id,  0,instructions,lengs,  patterns, memory,current_state,end_state,  n,  m,value_index);
+    return res;
+}
+
+
+
+
+int bfs_best_2(int minLevel, int max_id, std::vector<std::vector<Instruction>> Moves,std::vector<int> memory,std::vector<std::vector<int>> current_state,std::vector<std::vector<int>> end_state, int n, int m, std::vector<int> value_index){
+    int res = 10;
+    for(int i = 0; i < Moves.size(); ++i){
+        int res_2 = bfs_best(minLevel,max_id,Moves[i],memory, current_state,end_state,n,m,value_index);
+        res = std::min(res, res_2);
+    }
     return res;
 }
 
@@ -412,6 +426,68 @@ std::vector<std::vector<Instruction>> all_combinations(const std::vector<std::ve
     return result;
 }
 
+
+std::vector<std::vector<std::vector<Instruction>>> splitVectorInst(const std::vector<std::vector<Instruction>>& vec, const int K) {
+    const int N = vec.size();
+    const int chunkSize = std::ceil(static_cast<double>(N) / K);
+    std::vector<std::vector<std::vector<Instruction>>> result(K);
+    int index = 0;
+
+    for (int i = 0; i < K; i++) {
+        const int remaining = N - index;
+        const int currentChunkSize = std::min(chunkSize, remaining);
+        result[i].resize(currentChunkSize);
+
+        for (int j = 0; j < currentChunkSize; j++) {
+            result[i][j] = vec[index++];
+        }
+    }
+
+    return result;
+}
+
+std::vector<double> computeEXPcluster(int i, std::vector<double> expect_matrix, int MIN_LEVEL, int max_id,std::vector<int> memory,std::vector<std::vector<int>> voidMat,std::vector<std::vector<int>> V,std::vector<int> map_value, std::vector<int> hash_fake_i, std::vector<std::vector<int>> clusters, int EXPLOR_EX,std::uniform_int_distribution<int> distr_cls,std::mt19937 gen,std::vector<Instruction> Moves,std::vector<std::vector<double>> exp_inver_mat){
+    int n = voidMat.size();
+    for(int j = 0; j < clusters[i].size(); ++j){
+        int explor = EXPLOR_EX;
+        int sumexp = 0;
+        while(explor > 0){
+            int tmp_idx = distr_cls(gen);
+            auto hash_fake_i_tmp = hash_fake_i;
+            std::vector<Instruction> inst;
+            inst.push_back(Moves[clusters[i][j]]);
+
+            while(hash_fake_i_tmp.size() > 0){
+                
+
+                std::uniform_int_distribution<int> distr_tmp_1(0, hash_fake_i_tmp.size()-1);
+                int ll = distr_tmp_1(gen);
+                int l = hash_fake_i_tmp[ll];
+
+                std::discrete_distribution<> weighted_distrib(exp_inver_mat[l].begin(),(exp_inver_mat[l].begin()+ clusters[l].size()));
+                int k = weighted_distrib(gen);
+                inst.push_back(Moves[clusters[l][k]]);
+                hash_fake_i_tmp.erase(hash_fake_i_tmp.begin() + ll);
+            }
+
+            auto memory_tmp = memory;
+            auto void_mat_tmp = voidMat;
+            std::time_t start_time = std::time(nullptr);
+            int current_sol = bfs_spec(start_time,{{}}, {{}},MIN_LEVEL, false, 0,  max_id, 0, inst, memory_tmp, void_mat_tmp, V, n, n, map_value);
+
+            sumexp += current_sol;
+            explor--;
+            //printf("curr = %d, level = %d\n\n", current_sol,MIN_LEVEL);
+        }
+        auto tmp_exp = expect_matrix[j];
+        auto new_exp = static_cast<double>(sumexp)/(static_cast<double>(EXPLOR_EX));
+        if(tmp_exp == 100){
+            tmp_exp = new_exp;
+        }
+        expect_matrix[j] = (tmp_exp + new_exp)/2;
+    }
+    return expect_matrix;
+}
 
 int TOT_COLOR = 0;
 
@@ -554,80 +630,57 @@ int main(int argc, char *argv[])
     std::mt19937 gen(rd()); 
     std::uniform_int_distribution<int> distr_cls(0, clusters.size()-1);
 
+    unsigned int MAX_THREAD = std::thread::hardware_concurrency();
+
     std::vector<int> hash_fake(clusters.size());
     for (int i = 0; i < clusters.size(); i++) {
         hash_fake[i] = i;
     }
 
     while(TIME > 0){
+        printf("start compute Expectation\n");
+
+        
+        int thread_i_exp = 0;
+        std::vector<std::thread> threads_expect(clusters.size());
+        std::vector<std::vector<double>> results_exp(clusters.size());
+
         for(int i = 0; i < clusters.size(); ++i){
-            //remove index i forom fake hash
+            std::vector<double> exp_mat_i = expect_matrix[i];
             auto hash_fake_i = hash_fake;
             hash_fake_i.erase(hash_fake_i.begin() + i);
-            for(int j = 0; j < clusters[i].size(); ++j){
-                int explor = EXPLOR_EX;
-                int sumexp = 0;
-                while(explor > 0){
-                    int tmp_idx = distr_cls(gen);
-                    auto hash_fake_i_tmp = hash_fake_i;
-                    std::vector<Instruction> inst;
-                    inst.push_back(Moves[clusters[i][j]]);
-
-                    while(hash_fake_i_tmp.size() > 0){
-                        /*
-                        std::uniform_int_distribution<int> distr_tmp_1(0, hash_fake_i_tmp.size()-1);
-                        int ll = distr_tmp_1(gen);
-                        int l = hash_fake_i_tmp[ll];
-                        std::uniform_int_distribution<int> distr_tmp_2(0, clusters[l].size()-1);
-                        int k = distr_tmp_2(gen);*/
-
-
-                        std::uniform_int_distribution<int> distr_tmp_1(0, hash_fake_i_tmp.size()-1);
-                        int ll = distr_tmp_1(gen);
-                        int l = hash_fake_i_tmp[ll];
-
-                        std::discrete_distribution<> weighted_distrib(exp_inver_mat[l].begin(),(exp_inver_mat[l].begin()+ clusters[l].size()));
-                        int k = weighted_distrib(gen);
-                        inst.push_back(Moves[clusters[l][k]]);
-                        hash_fake_i_tmp.erase(hash_fake_i_tmp.begin() + ll);
-                    }
-
-                    auto memory_tmp = memory;
-                    auto void_mat_tmp = voidMat;
-                    std::time_t start_time = std::time(nullptr);
-                    int current_sol = bfs_spec(start_time,{{}}, {{}},MIN_LEVEL, false, 0,  max_id, 0, inst, memory_tmp, void_mat_tmp, V, n, n, map_value);
-
-                    /*
-                    if(current_sol <= 2){
-                        MIN_LEVEL = 0;
-                        min = current_sol;
-                        TIME = 0;
-                        break;
-                    }
-                    if(current_sol == 3){
-                        MIN_LEVEL = 1;
-                    }
-                    */
-
-                    min = std::min(min, current_sol);
-                    sumexp += current_sol;
-                    explor--;
-                    //printf("curr = %d, level = %d\n\n", current_sol,MIN_LEVEL);
-                }
-                auto tmp_exp = expect_matrix[i][j];
-                auto new_exp = static_cast<double>(sumexp)/(static_cast<double>(EXPLOR_EX));
-                if(tmp_exp == 100){
-                    tmp_exp = new_exp;
-                }
-                expect_matrix[i][j] = (tmp_exp + new_exp)/2;
-                exp_inver_mat[i][j] = 100/expect_matrix[i][j];
-                //printf("%f              %f\n", expect_matrix[i][j],exp_inver_mat[i][j]);
-            }
-
+            auto hash_fake_i_tmp = hash_fake_i;
+            auto expect_cluster_val = expect_matrix[i];
+            //std::vector<double> exp_new =  computeEXPcluster( i, expect_matrix[i],  MIN_LEVEL,  max_id,memory, voidMat,V,map_value,hash_fake_i, clusters,  EXPLOR_EX, distr_cls,gen, Moves, exp_inver_mat);
+            threads_expect[i] = std::thread([&results_exp,i, expect_cluster_val,  MIN_LEVEL,  max_id,memory, voidMat,V,map_value,hash_fake_i, clusters,  EXPLOR_EX, distr_cls,gen, Moves, exp_inver_mat]() {
+                results_exp[i] =  computeEXPcluster( i, expect_cluster_val,  MIN_LEVEL,  max_id,memory, voidMat,V,map_value,hash_fake_i, clusters,  EXPLOR_EX, distr_cls,gen, Moves, exp_inver_mat);;
+            });
         }
 
 
+
+        for (auto& thread : threads_expect) {
+            thread.join();
+        }
+
+        for(int i = 0; i < results_exp.size(); ++i){
+            expect_matrix[i] = results_exp[i];
+            for(int j = 0; j < expect_matrix[i].size(); ++j){
+                exp_inver_mat[i][j] = 100/expect_matrix[i][j];
+            }
+        }
+
+        printf("Get best in clusters\n");
+
+
         auto best_value = find_bottom_k_indices(expect_matrix, BEST_CHOOS);
+
+        // for(int in = 0; in < best_value.size(); in++){
+        //     for(int jn = 0; jn < best_value[in].size(); ++jn){
+        //         printInstruction(best_value[in][jn]);
+        //     }
+        // }
+
         std::vector<std::vector<Instruction>> allInstruction;
         
         for(int i = 0; i < best_value.size(); ++i){
@@ -638,31 +691,44 @@ int main(int argc, char *argv[])
         }
 
         auto allCombination = all_combinations(allInstruction);
-        printf("%lu\n",allCombination.size());
+        auto allCombination_K = splitVectorInst(allCombination, MAX_THREAD);
+        //printf("number of combination %lu, number of thread %d \n",allCombination_K.size(),MAX_THREAD);
 
+        printf("START THREAD\n");
+        int thread_i = 0;
+        std::vector<std::thread> threads(MAX_THREAD);
+        std::vector<int> results(MAX_THREAD);
 
-        for(int i = 0; i < allCombination.size(); ++i){
+        for (int j = 0; j < MAX_THREAD; j++) {
             auto memory_tmp = memory;
             auto void_mat_tmp = voidMat;
-            int current_sol = bfs_best(MIN_LEVEL, max_id, allCombination[i], memory_tmp, void_mat_tmp, V, n, n, map_value);
+            std::time_t start_time = std::time(nullptr);
+            threads[j] = std::thread([&results,j, allCombination_K, MIN_LEVEL, max_id, memory_tmp, void_mat_tmp, V, n, map_value]() {
+                results[j] = bfs_best_2(MIN_LEVEL, max_id, allCombination_K[j], memory_tmp, void_mat_tmp, V, n, n, map_value);
+            });
+        }
 
 
+
+        for (auto& thread : threads) {
+            thread.join();
+        }
+
+        for(int j = 0; j < results.size(); ++j){
+            auto current_sol = results[j];
             if(min > current_sol && min == 3){
                 MIN_LEVEL = 1;
             }
             min = std::min(min, current_sol);
             printf("New sol = %d\n",current_sol);
 
-
-
             if(min == 1){
                 TIME = 0;
                 break;
             }
+
         }
-                
-
-
+            
 
         TIME -= 1;
     }

@@ -12,6 +12,8 @@
 #include <random>
 #include <algorithm>
 #include <unordered_set>
+#include <thread>
+
 
 #include "./FileReader.hpp"
 #include "./instruction.hpp"
@@ -321,7 +323,7 @@ int bfs_spec(std::time_t start_time, std::vector<std::vector<int>> old_best_node
 }
 
 
-int bfs_best(int minLevel, int max_id, std::vector<Instruction> Moves,std::vector<int> & memory,std::vector<std::vector<int>> & current_state,std::vector<std::vector<int>> & end_state, int n, int m, std::vector<int> & value_index){
+int bfs_best(int minLevel, int max_id, std::vector<Instruction> Moves,std::vector<int> memory,std::vector<std::vector<int>> current_state,std::vector<std::vector<int>> end_state, int n, int m, std::vector<int> value_index){
     std::vector<std::vector<int> > instructions;
     std::vector<std::vector<int> > patterns;
     std::vector<int> lengs;
@@ -333,6 +335,18 @@ int bfs_best(int minLevel, int max_id, std::vector<Instruction> Moves,std::vecto
     }
     std::time_t start_time = std::time(nullptr);
     int res = getFitness(start_time, {{}}, {{}}, minLevel,  false, 0,  max_id,  0,instructions,lengs,  patterns, memory,current_state,end_state,  n,  m,value_index);
+    return res;
+}
+
+
+
+
+int bfs_best_2(int minLevel, int max_id, std::vector<std::vector<Instruction>> Moves,std::vector<int> memory,std::vector<std::vector<int>> current_state,std::vector<std::vector<int>> end_state, int n, int m, std::vector<int> value_index){
+    int res = 10;
+    for(int i = 0; i < Moves.size(); ++i){
+        int res_2 = bfs_best(minLevel,max_id,Moves[i],memory, current_state,end_state,n,m,value_index);
+        res = std::min(res, res_2);
+    }
     return res;
 }
 
@@ -412,6 +426,25 @@ std::vector<std::vector<Instruction>> all_combinations(const std::vector<std::ve
     return result;
 }
 
+
+std::vector<std::vector<std::vector<Instruction>>> splitVectorInst(const std::vector<std::vector<Instruction>>& vec, const int K) {
+    const int N = vec.size();
+    const int chunkSize = std::ceil(static_cast<double>(N) / K);
+    std::vector<std::vector<std::vector<Instruction>>> result(K);
+    int index = 0;
+
+    for (int i = 0; i < K; i++) {
+        const int remaining = N - index;
+        const int currentChunkSize = std::min(chunkSize, remaining);
+        result[i].resize(currentChunkSize);
+
+        for (int j = 0; j < currentChunkSize; j++) {
+            result[i][j] = vec[index++];
+        }
+    }
+
+    return result;
+}
 
 int TOT_COLOR = 0;
 
@@ -554,12 +587,15 @@ int main(int argc, char *argv[])
     std::mt19937 gen(rd()); 
     std::uniform_int_distribution<int> distr_cls(0, clusters.size()-1);
 
+    unsigned int MAX_THREAD = std::thread::hardware_concurrency();
+
     std::vector<int> hash_fake(clusters.size());
     for (int i = 0; i < clusters.size(); i++) {
         hash_fake[i] = i;
     }
 
     while(TIME > 0){
+        printf("start compute Expectation\n");
         for(int i = 0; i < clusters.size(); ++i){
             //remove index i forom fake hash
             auto hash_fake_i = hash_fake;
@@ -626,8 +662,17 @@ int main(int argc, char *argv[])
 
         }
 
+        printf("Get best in clusters\n");
+
 
         auto best_value = find_bottom_k_indices(expect_matrix, BEST_CHOOS);
+
+        // for(int in = 0; in < best_value.size(); in++){
+        //     for(int jn = 0; jn < best_value[in].size(); ++jn){
+        //         printInstruction(best_value[in][jn]);
+        //     }
+        // }
+
         std::vector<std::vector<Instruction>> allInstruction;
         
         for(int i = 0; i < best_value.size(); ++i){
@@ -638,31 +683,45 @@ int main(int argc, char *argv[])
         }
 
         auto allCombination = all_combinations(allInstruction);
-        printf("%lu\n",allCombination.size());
+        auto allCombination_K = splitVectorInst(allCombination, MAX_THREAD);
+        //printf("number of combination %lu, number of thread %d \n",allCombination_K.size(),MAX_THREAD);
 
+        printf("START THREAD\n");
+        int thread_i = 0;
+        std::vector<std::thread> threads(MAX_THREAD);
+        std::vector<int> results(MAX_THREAD);
 
-        for(int i = 0; i < allCombination.size(); ++i){
+        for (int j = 0; j < MAX_THREAD; j++) {
+            printf("single cosa = %lu\n",allCombination_K[j].size());
             auto memory_tmp = memory;
             auto void_mat_tmp = voidMat;
-            int current_sol = bfs_best(MIN_LEVEL, max_id, allCombination[i], memory_tmp, void_mat_tmp, V, n, n, map_value);
+            std::time_t start_time = std::time(nullptr);
+            threads[j] = std::thread([&results,j, allCombination_K, MIN_LEVEL, max_id, memory_tmp, void_mat_tmp, V, n, map_value]() {
+                results[j] = bfs_best_2(MIN_LEVEL, max_id, allCombination_K[j], memory_tmp, void_mat_tmp, V, n, n, map_value);
+            });
+        }
 
 
+
+        for (auto& thread : threads) {
+            thread.join();
+        }
+
+        for(int j = 0; j < results.size(); ++j){
+            auto current_sol = results[j];
             if(min > current_sol && min == 3){
                 MIN_LEVEL = 1;
             }
             min = std::min(min, current_sol);
             printf("New sol = %d\n",current_sol);
 
-
-
             if(min == 1){
                 TIME = 0;
                 break;
             }
+
         }
-                
-
-
+            
 
         TIME -= 1;
     }
