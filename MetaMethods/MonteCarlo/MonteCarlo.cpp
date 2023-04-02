@@ -307,7 +307,7 @@ int getFitnessPseudo(std::time_t start_time, std::vector<std::vector<int>> old_b
 }
 
 
-int bfs_spec(std::time_t start_time, std::vector<std::vector<int>> old_best_node, std::vector<std::vector<int>> fake_hash_old,int minLevel, bool same_level, int current_id, int max_id, int number_inst, std::vector<Instruction> Moves,std::vector<int> & memory,std::vector<std::vector<int>> & current_state,std::vector<std::vector<int>> & end_state, int n, int m, std::vector<int> & value_index){
+int bfs_spec(std::time_t start_time, std::vector<std::vector<int>> old_best_node, std::vector<std::vector<int>> fake_hash_old,int minLevel, bool same_level, int current_id, int max_id, int number_inst, std::vector<Instruction> Moves,std::vector<int> memory,std::vector<std::vector<int>> current_state,std::vector<std::vector<int>> end_state, int n, int m, std::vector<int> value_index){
     std::vector<std::vector<int> > instructions;
     std::vector<std::vector<int> > patterns;
     std::vector<int> lengs;
@@ -446,6 +446,49 @@ std::vector<std::vector<std::vector<Instruction>>> splitVectorInst(const std::ve
     return result;
 }
 
+std::vector<double> computeEXPcluster(int i, std::vector<double> expect_matrix, int MIN_LEVEL, int max_id,std::vector<int> const memory,std::vector<std::vector<int>> voidMat,std::vector<std::vector<int>> const & V,std::vector<int> const & map_value, std::vector<int> hash_fake_i, std::vector<std::vector<int>> const & clusters, int EXPLOR_EX,std::uniform_int_distribution<int> distr_cls,std::mt19937 gen,std::vector<Instruction> Moves,std::vector<std::vector<double>> exp_inver_mat){
+    int n = voidMat.size();
+    for(int j = 0; j < clusters[i].size(); ++j){
+        int explor = EXPLOR_EX;
+        int sumexp = 0;
+        while(explor > 0){
+            int tmp_idx = distr_cls(gen);
+            auto hash_fake_i_tmp = hash_fake_i;
+            std::vector<Instruction> inst;
+            inst.push_back(Moves[clusters[i][j]]);
+
+            while(hash_fake_i_tmp.size() > 0){
+                
+
+                std::uniform_int_distribution<int> distr_tmp_1(0, hash_fake_i_tmp.size()-1);
+                int ll = distr_tmp_1(gen);
+                int l = hash_fake_i_tmp[ll];
+
+                std::discrete_distribution<> weighted_distrib(exp_inver_mat[l].begin(),(exp_inver_mat[l].begin()+ clusters[l].size()));
+                int k = weighted_distrib(gen);
+                inst.push_back(Moves[clusters[l][k]]);
+                hash_fake_i_tmp.erase(hash_fake_i_tmp.begin() + ll);
+            }
+
+            auto memory_tmp = memory;
+            auto void_mat_tmp = voidMat;
+            std::time_t start_time = std::time(nullptr);
+            int current_sol = bfs_spec(start_time,{{}}, {{}},MIN_LEVEL, false, 0,  max_id, 0, inst, memory_tmp, void_mat_tmp, V, n, n, map_value);
+
+            sumexp += current_sol;
+            explor--;
+            //printf("curr = %d, level = %d\n\n", current_sol,MIN_LEVEL);
+        }
+        auto tmp_exp = expect_matrix[j];
+        auto new_exp = static_cast<double>(sumexp)/(static_cast<double>(EXPLOR_EX));
+        if(tmp_exp == 100){
+            tmp_exp = new_exp;
+        }
+        expect_matrix[j] = (tmp_exp + new_exp)/2;
+    }
+    return expect_matrix;
+}
+
 int TOT_COLOR = 0;
 
 int main(int argc, char *argv[])
@@ -458,7 +501,7 @@ int main(int argc, char *argv[])
     //3 solo 3 e non 2 PERCHE la sol non ha i primi numeri :)
     //2 troppo lento
     //std::string path = "./Graph/miniGraph_3.txt";
-    std::string path = "./Graph/TestGraph_11.txt";
+    std::string path = "./Graph/TestGraph_5.txt";
     //read file and convert information into a matrix
     auto V = file_reader(path);
     int n = V.size();
@@ -542,7 +585,6 @@ int main(int argc, char *argv[])
 
     //auto clusters = KmeansPlusPlus(k, Moves, V,voidMat,map_value);
     auto clusters = K_means_cos(k, Moves, V,voidMat,map_value);
-    
     printf("end do create clusters\n");
 
     // for(int i = 0; i < clusters.size(); ++i){
@@ -562,30 +604,19 @@ int main(int argc, char *argv[])
     }
     std::vector<std::vector<double>> expect_matrix(clusters.size(), std::vector<double>(max_cols, 100));
     std::vector<std::vector<double>> exp_inver_mat(clusters.size(), std::vector<double>(max_cols, 1));
-
-    /*
-    double MINEXP = 100.0;
-
-    std::vector<std::vector<double>> expect_matrix;
-    for(int i = 0; i < clusters.size(); ++i){
-        expect_matrix.push_back({});
-        for(int j = 0; j < clusters.size(); ++j){
-            expect_matrix[i].push_back(1/MINEXP);
-        }
-    }*/
-
-    // Inizializziamo la nuova matrice con tutti i valori a 0
-
-    int TIME = 3;
+    
+    int TIME = 5;
     int EXPLOR_EX = 20;
     int EXPLORE_B = 50;
     int MIN_LEVEL = TOT_COLOR-2;
-    int BEST_CHOOS = 3;
+    int BEST_CHOOS = 4;
     int TOT_B_CHOO = 5;
     int min = TOT_COLOR;
+    int old_min = TOT_COLOR;
     std::random_device rd;
     std::mt19937 gen(rd()); 
     std::uniform_int_distribution<int> distr_cls(0, clusters.size()-1);
+    std::mutex mutex;
 
     unsigned int MAX_THREAD = std::thread::hardware_concurrency();
 
@@ -595,77 +626,51 @@ int main(int argc, char *argv[])
     }
 
     while(TIME > 0){
-        printf("start compute Expectation\n");
+        printf("start compute Expectation with %lu Thread\n",clusters.size());
+
+        
+        int thread_i_exp = 0;
+        std::vector<std::thread> threads_expect(clusters.size());
+        std::vector<std::vector<double>> results_exp(clusters.size());
+
+
         for(int i = 0; i < clusters.size(); ++i){
-            //remove index i forom fake hash
+            std::vector<double> exp_mat_i = expect_matrix[i];
             auto hash_fake_i = hash_fake;
             hash_fake_i.erase(hash_fake_i.begin() + i);
-            for(int j = 0; j < clusters[i].size(); ++j){
-                int explor = EXPLOR_EX;
-                int sumexp = 0;
-                while(explor > 0){
-                    int tmp_idx = distr_cls(gen);
-                    auto hash_fake_i_tmp = hash_fake_i;
-                    std::vector<Instruction> inst;
-                    inst.push_back(Moves[clusters[i][j]]);
+            auto hash_fake_i_tmp = hash_fake_i;
+            auto expect_cluster_val = expect_matrix[i];
+            threads_expect[i] = std::thread([&results_exp,i, expect_cluster_val,  MIN_LEVEL,  max_id,memory, voidMat,V,map_value,hash_fake_i, clusters,  EXPLOR_EX, distr_cls,gen, Moves, exp_inver_mat]() {
+                results_exp[i] =  computeEXPcluster( i, expect_cluster_val,  MIN_LEVEL,  max_id,memory, voidMat,V,map_value,hash_fake_i, clusters,  EXPLOR_EX, distr_cls,gen, Moves, exp_inver_mat);;
 
-                    while(hash_fake_i_tmp.size() > 0){
-                        /*
-                        std::uniform_int_distribution<int> distr_tmp_1(0, hash_fake_i_tmp.size()-1);
-                        int ll = distr_tmp_1(gen);
-                        int l = hash_fake_i_tmp[ll];
-                        std::uniform_int_distribution<int> distr_tmp_2(0, clusters[l].size()-1);
-                        int k = distr_tmp_2(gen);*/
+            });
+        }
 
 
-                        std::uniform_int_distribution<int> distr_tmp_1(0, hash_fake_i_tmp.size()-1);
-                        int ll = distr_tmp_1(gen);
-                        int l = hash_fake_i_tmp[ll];
-
-                        std::discrete_distribution<> weighted_distrib(exp_inver_mat[l].begin(),(exp_inver_mat[l].begin()+ clusters[l].size()));
-                        int k = weighted_distrib(gen);
-                        inst.push_back(Moves[clusters[l][k]]);
-                        hash_fake_i_tmp.erase(hash_fake_i_tmp.begin() + ll);
-                    }
-
-                    auto memory_tmp = memory;
-                    auto void_mat_tmp = voidMat;
-                    std::time_t start_time = std::time(nullptr);
-                    int current_sol = bfs_spec(start_time,{{}}, {{}},MIN_LEVEL, false, 0,  max_id, 0, inst, memory_tmp, void_mat_tmp, V, n, n, map_value);
-
-                    /*
-                    if(current_sol <= 2){
-                        MIN_LEVEL = 0;
-                        min = current_sol;
-                        TIME = 0;
-                        break;
-                    }
-                    if(current_sol == 3){
-                        MIN_LEVEL = 1;
-                    }
-                    */
-
-                    min = std::min(min, current_sol);
-                    sumexp += current_sol;
-                    explor--;
-                    //printf("curr = %d, level = %d\n\n", current_sol,MIN_LEVEL);
-                }
-                auto tmp_exp = expect_matrix[i][j];
-                auto new_exp = static_cast<double>(sumexp)/(static_cast<double>(EXPLOR_EX));
-                if(tmp_exp == 100){
-                    tmp_exp = new_exp;
-                }
-                expect_matrix[i][j] = (tmp_exp + new_exp)/2;
+        for (auto& thread : threads_expect) {
+            thread.join();
+        }
+        printf("inverse of expectation\n");
+        for(int i = 0; i < results_exp.size(); ++i){
+            expect_matrix[i] = results_exp[i];
+            for(int j = 0; j < expect_matrix[i].size(); ++j){
                 exp_inver_mat[i][j] = 100/expect_matrix[i][j];
-                //printf("%f              %f\n", expect_matrix[i][j],exp_inver_mat[i][j]);
             }
-
         }
 
         printf("Get best in clusters\n");
 
 
         auto best_value = find_bottom_k_indices(expect_matrix, BEST_CHOOS);
+
+        /*
+        for(int i = BEST_CHOOS; i <= TOT_B_CHOO; ++i){
+            for(int j = 0; j < best_value.size();++j){
+                std::discrete_distribution<> weighted_distrib(exp_inver_mat[j].begin(),(exp_inver_mat[j].begin()+ clusters[j].size()));
+                int k = weighted_distrib(gen);
+                best_value[j].push_back(clusters[j][k]);
+            }
+        }*/
 
         // for(int in = 0; in < best_value.size(); in++){
         //     for(int jn = 0; jn < best_value[in].size(); ++jn){
@@ -692,7 +697,6 @@ int main(int argc, char *argv[])
         std::vector<int> results(MAX_THREAD);
 
         for (int j = 0; j < MAX_THREAD; j++) {
-            printf("single cosa = %lu\n",allCombination_K[j].size());
             auto memory_tmp = memory;
             auto void_mat_tmp = voidMat;
             std::time_t start_time = std::time(nullptr);
@@ -706,23 +710,49 @@ int main(int argc, char *argv[])
         for (auto& thread : threads) {
             thread.join();
         }
+        
 
         for(int j = 0; j < results.size(); ++j){
             auto current_sol = results[j];
-            if(min > current_sol && min == 3){
-                MIN_LEVEL = 1;
-            }
+            
             min = std::min(min, current_sol);
             printf("New sol = %d\n",current_sol);
 
-            if(min == 1){
-                TIME = 0;
-                break;
+        }
+        
+        if(min <= 2){
+            break;
+        }
+
+        MIN_LEVEL = min - 2;
+
+        if(old_min != min){
+            printf("recompute Clusters for new depth\n");
+            k = min - 1;
+            auto clusters_new = KmeansPlusPlus(k, Moves, V,voidMat,map_value);
+            clusters = clusters_new;
+            int max_cols = 0;
+            for (const auto& row : clusters) {
+                if (row.size() > max_cols) {
+                    max_cols = row.size();
+                }
             }
 
-        }
-            
+            std::vector<std::vector<double>> new_expect_matrix(clusters.size(), std::vector<double>(max_cols, 100));
+            std::vector<std::vector<double>> new_exp_inver_mat(clusters.size(), std::vector<double>(max_cols, 1));
+            expect_matrix = new_expect_matrix;
+            exp_inver_mat = new_exp_inver_mat;
 
+            std::vector<int> hash_fake_2(clusters.size());
+            for (int i = 0; i < clusters.size(); i++) {
+                hash_fake_2[i] = i;
+            }
+
+            hash_fake = hash_fake_2;
+            printf("%lu, %d\n", clusters.size(), MIN_LEVEL);
+        }
+
+        old_min = min;
         TIME -= 1;
     }
     printf("MIN = %d\n", min);

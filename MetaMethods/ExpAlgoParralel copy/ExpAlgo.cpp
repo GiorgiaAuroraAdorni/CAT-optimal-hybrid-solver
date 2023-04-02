@@ -25,6 +25,9 @@
 
 
 
+
+int NOTCOLOR = 5;
+
 double MIN_SIMILARITY = 0.75;
 
 void print_vector(const std::vector<int>& v) {
@@ -63,13 +66,13 @@ void print_colorful_vector(const std::vector<int>& v) {
                 std::cout << "\033[31m" << v[i] << "\033[0m ";
                 break;
             case 2:
-                std::cout << "\033[34m" << v[i] << "\033[0m ";
+                std::cout << "\033[32m" << v[i] << "\033[0m ";
                 break;
             case 3:
-                std::cout << "\033[33m" << v[i] << "\033[0m ";
+                std::cout << "\033[34m" << v[i] << "\033[0m ";
                 break;
             case 4:
-                std::cout << "\033[32m" << v[i] << "\033[0m ";
+                std::cout << "\033[33m" << v[i] << "\033[0m ";
                 break;
             default:
                 std::cout << v[i] << " ";
@@ -90,6 +93,22 @@ int FillWithPerfect(std::vector<std::vector<int>> index_nodes, std::vector<int> 
 int SECONDTOBREAK = 15;
 
 int getFitness(std::time_t start_time, std::vector<std::vector<int>> old_best_node, std::vector<std::vector<int>> fake_hash_old,int minLevel, bool same_level, int current_id, int max_id, int number_inst, std::vector<std::vector<int>> instructions, std::vector<int> lengts, std::vector<std::vector<int>> patterns,std::vector<int> & memory,std::vector<std::vector<int>> & current_state,std::vector<std::vector<int>> & end_state, int n, int m, std::vector<int> & value_index){
+    
+    
+    if(number_inst == 0){
+        int end_id = current_id;
+        auto new_current_state = current_state;
+        auto allCopy = checkForCopy(end_id, 0,0, instructions[number_inst], lengts[number_inst], patterns[number_inst], &end_state, &new_current_state, value_index);
+        
+        
+        for(int i = 0; i < allCopy.size(); ++i){
+            end_id = executeInstruction(end_id, allCopy[i][0],allCopy[i][1],instructions[number_inst],  lengts[number_inst],  patterns[number_inst], &end_state, &new_current_state,value_index);
+        }
+    
+        return getFitness(start_time,{{}},{{}},minLevel, false, end_id, max_id, (number_inst+1), instructions, lengts, patterns, memory, new_current_state, end_state, n,  m,value_index);
+
+    }
+    
     std::time_t current_time = std::time(nullptr);
     std::time_t elapsed_time = current_time - start_time;
     if (elapsed_time >= SECONDTOBREAK) {
@@ -446,7 +465,7 @@ std::vector<std::vector<std::vector<Instruction>>> splitVectorInst(const std::ve
     return result;
 }
 
-std::vector<double> computeEXPcluster(int i, std::vector<double> expect_matrix, int MIN_LEVEL, int max_id,std::vector<int> memory,std::vector<std::vector<int>> voidMat,std::vector<std::vector<int>> V,std::vector<int> map_value, std::vector<int> hash_fake_i, std::vector<std::vector<int>> clusters, int EXPLOR_EX,std::uniform_int_distribution<int> distr_cls,std::mt19937 gen,std::vector<Instruction> Moves,std::vector<std::vector<double>> exp_inver_mat){
+std::vector<double> computeEXPcluster(int i, std::vector<double> expect_matrix, int MIN_LEVEL, int max_id,std::vector<int> const memory,std::vector<std::vector<int>> voidMat,std::vector<std::vector<int>> const & V,std::vector<int> const & map_value, std::vector<int> hash_fake_i, std::vector<std::vector<int>> const & clusters, int EXPLOR_EX,std::uniform_int_distribution<int> distr_cls,std::mt19937 gen,std::vector<Instruction> Moves,std::vector<std::vector<double>> exp_inver_mat){
     int n = voidMat.size();
     for(int j = 0; j < clusters[i].size(); ++j){
         int explor = EXPLOR_EX;
@@ -489,8 +508,70 @@ std::vector<double> computeEXPcluster(int i, std::vector<double> expect_matrix, 
     return expect_matrix;
 }
 
-int TOT_COLOR = 0;
+std::vector<std::vector<Instruction>> getMatrixMove(std::vector<std::vector<int>> clusters, std::vector<Instruction> Moves,std::vector<std::vector<int>> best_value){
+    std::vector<std::vector<Instruction>> allInstruction;
 
+    int a = 0;
+    for(int i = 0; i < best_value.size(); ++i){
+        allInstruction.push_back({});
+        for(int j = 0; j < best_value[i].size(); ++j){
+            allInstruction[i].push_back(Moves[clusters[i][best_value[i][j]]]);
+            a += 1;
+        }
+    }
+    printf(" A = %d a\n",a);
+    return allInstruction;
+}
+
+
+void backtrack(const std::vector<std::vector<Instruction>>& input, std::vector<std::vector<Instruction>>& result, std::vector<Instruction>& current, int row) {
+    if (row == input.size()) {
+        result.push_back(current);
+        return;
+    }
+
+    for (int col = 0; col < input[row].size(); ++col) {
+        current.push_back(input[row][col]);
+        backtrack(input, result, current, row + 1);
+        current.pop_back();
+    }
+}
+
+std::vector<std::vector<Instruction>> generateCombinations(const std::vector<std::vector<Instruction>>& input) {
+    std::vector<std::vector<Instruction>> result;
+    std::vector<Instruction> current;
+    backtrack(input, result, current, 0);
+    return result;
+}
+
+
+
+void permute(std::vector<Instruction>& input, int start, std::vector<std::vector<Instruction>>& output) {
+    if (start == input.size() - 1) {
+        output.push_back(input);
+        return;
+    }
+
+    for (int i = start; i < input.size(); ++i) {
+        std::swap(input[start], input[i]);
+        permute(input, start + 1, output);
+        std::swap(input[start], input[i]);
+    }
+}
+
+std::vector<std::vector<Instruction>> generatePermutations(const std::vector<std::vector<Instruction>>& input) {
+    std::vector<std::vector<Instruction>> output;
+
+    for (const std::vector<Instruction>& row : input) {
+        std::vector<Instruction> temp(row);
+        permute(temp, 0, output);
+    }
+
+    return output;
+}
+
+
+int TOT_COLOR = 0;
 int main(int argc, char *argv[])
 {   
     //TODO 4
@@ -546,35 +627,6 @@ int main(int argc, char *argv[])
 
     Moves = getPossibleINST(TOT_istructions ,V);
 
-//DEBUG
-    // Instruction A;
-    // Instruction B;
-    // Instruction C;
-
-
-    // A.instruction = {2, 0, 1, -1, 0, 0, -1} ;
-    // B.instruction = {0, 1, 0};
-    // C.instruction = {0, 0, 1};
-    // A.pattern = {1,1,2,3};
-    // B.pattern = {3,3,4 };
-    // C.pattern = {1,2,3};
-    // A.len = 1;
-    // B.len = 3;
-    // C.len = 3;
-    
-    // // int idaskd = 0;
-    // // idaskd = executeInstruction(idaskd, 3,0,A.instruction, A.len, A.pattern, &V, &voidMat,map_value);
-    // // idaskd = executeInstruction(idaskd, 3,3,A.instruction, A.len, A.pattern, &V, &voidMat,map_value);
-    // // idaskd = executeInstruction(idaskd, 4,3,B.instruction, B.len, B.pattern, &V, &voidMat,map_value);
-    // // idaskd = executeInstruction(idaskd, 4,2,B.instruction, B.len, B.pattern, &V, &voidMat,map_value);
-    // // idaskd = getMirrorHorizontalDown(idaskd,  V,  voidMat,map_value).first;
-
-    // int fit = bfs_best(2, max_id, {B,A,C}, memory, voidMat, V, n, n, map_value);
-    // printf("FIT = %d\n",fit);
-    // printArray(voidMat);
-    // return 1;
-    ///////////
-
 
     printf("start do create clusters\n");
     int k = TOT_COLOR - 1;
@@ -583,18 +635,18 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    //auto clusters = KmeansPlusPlus(k, Moves, V,voidMat,map_value);
-    auto clusters = K_means_cos(k, Moves, V,voidMat,map_value);
-    
+    auto clusters = KmeansPlusPlus(k, Moves, V,voidMat,map_value);
+    //auto clusters = K_means_cos(k, Moves, V,voidMat,map_value);
+
     printf("end do create clusters\n");
 
-    // for(int i = 0; i < clusters.size(); ++i){
-    //         for(int j = 0; j < clusters[i].size(); ++j){
-    //             print_colorful_vector(Moves[clusters[i][j]].pattern);
-    //         }
-    //         printf("\n");
-    // }
-    // printf("end to create clusters\n");
+    for(int i = 0; i < clusters.size(); ++i){
+            for(int j = 0; j < clusters[i].size(); ++j){
+                print_colorful_vector(Moves[clusters[i][j]].pattern);
+            }
+            printf("\n");
+    }
+    printf("end to create clusters\n");
 
     
     int max_cols = 0;
@@ -605,30 +657,19 @@ int main(int argc, char *argv[])
     }
     std::vector<std::vector<double>> expect_matrix(clusters.size(), std::vector<double>(max_cols, 100));
     std::vector<std::vector<double>> exp_inver_mat(clusters.size(), std::vector<double>(max_cols, 1));
-
-    /*
-    double MINEXP = 100.0;
-
-    std::vector<std::vector<double>> expect_matrix;
-    for(int i = 0; i < clusters.size(); ++i){
-        expect_matrix.push_back({});
-        for(int j = 0; j < clusters.size(); ++j){
-            expect_matrix[i].push_back(1/MINEXP);
-        }
-    }*/
-
-    // Inizializziamo la nuova matrice con tutti i valori a 0
-
-    int TIME = 3;
+    
+    int TIME = 5;
     int EXPLOR_EX = 20;
     int EXPLORE_B = 50;
     int MIN_LEVEL = TOT_COLOR-2;
     int BEST_CHOOS = 3;
     int TOT_B_CHOO = 5;
     int min = TOT_COLOR;
+    int old_min = TOT_COLOR;
     std::random_device rd;
     std::mt19937 gen(rd()); 
     std::uniform_int_distribution<int> distr_cls(0, clusters.size()-1);
+    std::mutex mutex;
 
     unsigned int MAX_THREAD = std::thread::hardware_concurrency();
 
@@ -638,12 +679,13 @@ int main(int argc, char *argv[])
     }
 
     while(TIME > 0){
-        printf("start compute Expectation\n");
+        printf("start compute Expectation with %lu Thread\n",clusters.size());
 
         
         int thread_i_exp = 0;
         std::vector<std::thread> threads_expect(clusters.size());
         std::vector<std::vector<double>> results_exp(clusters.size());
+
 
         for(int i = 0; i < clusters.size(); ++i){
             std::vector<double> exp_mat_i = expect_matrix[i];
@@ -651,18 +693,17 @@ int main(int argc, char *argv[])
             hash_fake_i.erase(hash_fake_i.begin() + i);
             auto hash_fake_i_tmp = hash_fake_i;
             auto expect_cluster_val = expect_matrix[i];
-            //std::vector<double> exp_new =  computeEXPcluster( i, expect_matrix[i],  MIN_LEVEL,  max_id,memory, voidMat,V,map_value,hash_fake_i, clusters,  EXPLOR_EX, distr_cls,gen, Moves, exp_inver_mat);
             threads_expect[i] = std::thread([&results_exp,i, expect_cluster_val,  MIN_LEVEL,  max_id,memory, voidMat,V,map_value,hash_fake_i, clusters,  EXPLOR_EX, distr_cls,gen, Moves, exp_inver_mat]() {
                 results_exp[i] =  computeEXPcluster( i, expect_cluster_val,  MIN_LEVEL,  max_id,memory, voidMat,V,map_value,hash_fake_i, clusters,  EXPLOR_EX, distr_cls,gen, Moves, exp_inver_mat);;
+
             });
         }
-
 
 
         for (auto& thread : threads_expect) {
             thread.join();
         }
-
+        printf("inverse of expectation\n");
         for(int i = 0; i < results_exp.size(); ++i){
             expect_matrix[i] = results_exp[i];
             for(int j = 0; j < expect_matrix[i].size(); ++j){
@@ -674,23 +715,16 @@ int main(int argc, char *argv[])
 
 
         auto best_value = find_bottom_k_indices(expect_matrix, BEST_CHOOS);
-
-        // for(int in = 0; in < best_value.size(); in++){
-        //     for(int jn = 0; jn < best_value[in].size(); ++jn){
-        //         printInstruction(best_value[in][jn]);
-        //     }
-        // }
-
-        std::vector<std::vector<Instruction>> allInstruction;
         
-        for(int i = 0; i < best_value.size(); ++i){
-            allInstruction.push_back({});
-            for(int j = 0; j < best_value[i].size(); ++j){
-                allInstruction[i].push_back(Moves[clusters[i][best_value[i][j]]]);
-            }
-        }
 
-        auto allCombination = all_combinations(allInstruction);
+        std::vector<std::vector<Instruction>> matrixInst  = getMatrixMove( clusters,  Moves,best_value);
+        
+        auto allCombination_1 = generateCombinations(matrixInst);
+        auto allCombination = generatePermutations(allCombination_1);
+
+        printf("allCombination = %lu\n",allCombination.size());
+
+    
         auto allCombination_K = splitVectorInst(allCombination, MAX_THREAD);
         //printf("number of combination %lu, number of thread %d \n",allCombination_K.size(),MAX_THREAD);
 
@@ -713,25 +747,55 @@ int main(int argc, char *argv[])
         for (auto& thread : threads) {
             thread.join();
         }
+        
 
         for(int j = 0; j < results.size(); ++j){
             auto current_sol = results[j];
-            if(min > current_sol && min == 3){
-                MIN_LEVEL = 1;
-            }
+            
             min = std::min(min, current_sol);
             printf("New sol = %d\n",current_sol);
 
-            if(min == 1){
-                TIME = 0;
-                break;
+        }
+        
+        if(min <= 2){
+            break;
+        }
+
+        MIN_LEVEL = min - 2;
+
+        if(old_min != min){
+            printf("recompute Clusters for new depth\n");
+            k = min - 1;
+            auto clusters_new = KmeansPlusPlus(k, Moves, V,voidMat,map_value);
+            clusters = clusters_new;
+            int max_cols = 0;
+            for (const auto& row : clusters) {
+                if (row.size() > max_cols) {
+                    max_cols = row.size();
+                }
             }
 
-        }
-            
+            std::vector<std::vector<double>> new_expect_matrix(clusters.size(), std::vector<double>(max_cols, 100));
+            std::vector<std::vector<double>> new_exp_inver_mat(clusters.size(), std::vector<double>(max_cols, 1));
+            expect_matrix = new_expect_matrix;
+            exp_inver_mat = new_exp_inver_mat;
 
+            std::vector<int> hash_fake_2(clusters.size());
+            for (int i = 0; i < clusters.size(); i++) {
+                hash_fake_2[i] = i;
+            }
+
+            hash_fake = hash_fake_2;
+            printf("%lu, %d\n", clusters.size(), MIN_LEVEL);
+        }
+
+        old_min = min;
         TIME -= 1;
     }
+    std::time_t current_time = std::time(nullptr);
+    std::time_t elapsed_time = current_time - start_algo;
+    std::cout << "Elapsed time: " << elapsed_time << " seconds\n";
+
     printf("MIN = %d\n", min);
 }
 

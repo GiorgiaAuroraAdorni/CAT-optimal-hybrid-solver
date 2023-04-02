@@ -1,5 +1,4 @@
 
-int NOTCOLOR = 5;
 std::vector<int> vectorize(const std::vector<std::vector<int>>& matrix) {
     std::vector<int> result;
     for (const auto& row : matrix) {
@@ -18,6 +17,17 @@ double euclideanDistance(const std::vector<int>& vec1, const std::vector<double>
     }
     return std::sqrt(sum);
 }
+
+
+double euclideanDistance_2(const std::vector<double>& vec1, const std::vector<double>& vec2) {
+    double sum = 0.0;
+    for (int i = 0; i < vec1.size(); ++i) {
+        double diff = vec1[i] - vec2[i];
+        sum += diff * diff;
+    }
+    return std::sqrt(sum);
+}
+
 
 
 double squared_euclidean_distance(const std::vector<int>& point1, const std::vector<int>& point2) {
@@ -89,6 +99,21 @@ void writeVectorToFile(const std::vector<std::vector<std::vector<int>>>& vec) {
         outFile.close();
     }
 }
+void writeVectorToFile_2(const std::vector<std::vector<std::vector<double>>>& vec) {
+    std::ofstream outFile("./OutputCluster/test_2.txt");
+    if (outFile.is_open()) {
+        for (const auto& outerVec : vec) {
+            for (const auto& innerVec : outerVec) {
+                for (const auto& val : innerVec) {
+                    outFile << val << " ";
+                }
+                outFile << std::endl;
+            }
+            outFile << "===" << std::endl; // separatore tra i sottovettori esterni
+        }
+        outFile.close();
+    }
+}
 
 
 std::vector<double> computeCentroidEuc(const std::vector<std::vector<int>>& cluster) {
@@ -105,6 +130,19 @@ std::vector<double> computeCentroidEuc(const std::vector<std::vector<int>>& clus
 }
 
 
+
+std::vector<double> computeCentroidEuc_2(const std::vector<std::vector<double>>& cluster) {
+    std::vector<double> centroid(cluster[0].size(), 0.0);
+    for (int i = 0; i < cluster.size(); ++i) {
+        for (int j = 0; j < cluster[i].size(); ++j) {
+            centroid[j] += cluster[i][j];
+        }
+    }
+    for (int i = 0; i < centroid.size(); ++i) {
+        centroid[i] /= cluster.size();
+    }
+    return centroid;
+}
 //__________________________________________________//
 //__________________________________________________//
 //__________________________________________________//
@@ -206,6 +244,184 @@ std::vector<std::vector<int>> KmeansPlusPlus(int k_clusters, std::vector<Instruc
 
 
 
+
+std::vector<std::vector<int>> KmeansPlusPlus_2(int k_clusters, std::vector<std::vector<double>> VectorMatrix, std::vector<std::vector<int>> & finalMat, std::vector<std::vector<int>> & voidMat,std::vector<int> value_index){
+    std::vector<std::vector<int>> Clusters;
+
+
+    //Step 2 k-means
+    //a initialize k centroid
+    std::random_device rd;
+    std::mt19937 gen(rd()); 
+    std::uniform_int_distribution<int> distr(0, VectorMatrix.size()-1);
+    std::uniform_int_distribution<int> distr_start(0, k_clusters-1);
+    std::vector<std::vector<double>> Centroids;
+    
+
+    int first_centroid = distr(gen);
+    Centroids.push_back(VectorMatrix[first_centroid]);
+    auto oldCentroid = Centroids[0];
+    while(Centroids.size() < k_clusters){
+        std::vector<double> distances;
+        double total_distance = 0.0;
+        for(int i = 0; i < VectorMatrix.size(); ++i){
+            double dist_tmp = euclideanDistance_2(VectorMatrix[i], oldCentroid);
+            distances.push_back(dist_tmp);
+            total_distance += dist_tmp;
+        }
+
+        std::discrete_distribution<> weighted_distrib(distances.begin(), distances.end());
+        int idx = weighted_distrib(gen);
+        Centroids.push_back(VectorMatrix[idx]);
+        oldCentroid = Centroids[Centroids.size()-1];
+    }
+    bool flag_cluster = true;
+    while(flag_cluster){
+
+        //check for every cluster wich is the most near and add in this cluster
+        std::vector<std::vector<std::vector<double>>> Clusters_tmp(k_clusters, std::vector<std::vector<double>>());
+        std::vector<std::vector<int>> Clusters_idx_tmp(k_clusters, std::vector<int>());
+        for(int i = 0; i < VectorMatrix.size(); ++i){
+            int best_cluster = -1;
+            double similarity = std::numeric_limits<double>::infinity();
+
+            for(int j = 0; j < k_clusters; ++j){
+                double sim_j_clus =  euclideanDistance_2(VectorMatrix[i], Centroids[j]);
+                if(sim_j_clus < similarity){
+                    best_cluster = j;
+                    similarity = sim_j_clus;
+                }
+            }
+            if(best_cluster == -1){
+                for (const auto& elem : VectorMatrix[i]) {
+                    std::cout << elem << " ";
+                }
+                printf("\n");
+                return {{-1}};
+            }
+            Clusters_tmp[best_cluster].push_back(VectorMatrix[i]);
+            Clusters_idx_tmp[best_cluster].push_back(i);
+        }
+        //recompute the centroid
+        bool flag_tmp = false;
+
+        for(int j = 0; j < k_clusters; ++j){
+            auto old_centroid = Centroids[j];
+            auto new_centroid = computeCentroidEuc_2(Clusters_tmp[j]);
+            Centroids[j] = new_centroid;
+            flag_tmp = flag_tmp || !(areVectorsEqual(old_centroid,new_centroid));
+
+        }
+       
+        flag_cluster = flag_tmp;
+        if(!flag_cluster){
+            writeVectorToFile_2(Clusters_tmp);
+        }
+        Clusters = Clusters_idx_tmp;
+    }
+
+    return Clusters;
+}
+
+
+
+
+std::vector<std::vector<int>> KmeansPlusPlus_3(int k_clusters,std::vector<Instruction> Moves , std::vector<std::vector<double>> VectorMatrix, std::vector<std::vector<int>> & finalMat, std::vector<std::vector<int>> & voidMat,std::vector<int> value_index){
+    std::vector<std::vector<int>> vecOriginal;
+    
+    //Step 1: generate all vector for all move
+    for(int i = 0; i < Moves.size(); ++i){
+        auto tmpMat = voidMat;
+        //auto allCopy = checkForBESTmove(Moves[i].instruction, Moves[i].len, Moves[i].pattern,  &finalMat, &tmpMat).first;
+        auto allCopy = checkForCopy(0, 0,0, Moves[i].instruction, Moves[i].len, Moves[i].pattern, &finalMat, &tmpMat, value_index);
+        for(int i = 0; i < allCopy.size(); ++i){
+            executeInstruction(0, allCopy[i][0],allCopy[i][1], Moves[i].instruction, Moves[i].len,  Moves[i].pattern, &finalMat, &tmpMat,value_index);
+        } 
+
+        auto vectorizedMove = vectorize(tmpMat);
+        vecOriginal.push_back(vectorizedMove);
+    }
+    
+    std::vector<std::vector<int>> Clusters;
+
+
+    //Step 2 k-means
+    //a initialize k centroid
+    std::random_device rd;
+    std::mt19937 gen(rd()); 
+    std::uniform_int_distribution<int> distr(0, VectorMatrix.size()-1);
+    std::uniform_int_distribution<int> distr_start(0, k_clusters-1);
+    std::vector<std::vector<double>> Centroids;
+    
+
+    int first_centroid = distr(gen);
+    Centroids.push_back(VectorMatrix[first_centroid]);
+    auto oldCentroid = Centroids[0];
+    while(Centroids.size() < k_clusters){
+        std::vector<double> distances;
+        double total_distance = 0.0;
+        for(int i = 0; i < VectorMatrix.size(); ++i){
+            double dist_tmp = euclideanDistance_2(VectorMatrix[i], oldCentroid);
+            distances.push_back(dist_tmp);
+            total_distance += dist_tmp;
+        }
+
+        std::discrete_distribution<> weighted_distrib(distances.begin(), distances.end());
+        int idx = weighted_distrib(gen);
+        Centroids.push_back(VectorMatrix[idx]);
+        oldCentroid = Centroids[Centroids.size()-1];
+    }
+    bool flag_cluster = true;
+    while(flag_cluster){
+
+        //check for every cluster wich is the most near and add in this cluster
+        std::vector<std::vector<std::vector<double>>> Clusters_tmp(k_clusters, std::vector<std::vector<double>>());
+        std::vector<std::vector<std::vector<int>>> Clusters_tmp_2(k_clusters, std::vector<std::vector<int>>());
+        std::vector<std::vector<int>> Clusters_idx_tmp(k_clusters, std::vector<int>());
+        for(int i = 0; i < VectorMatrix.size(); ++i){
+            int best_cluster = -1;
+            double similarity = std::numeric_limits<double>::infinity();
+
+            for(int j = 0; j < k_clusters; ++j){
+                double sim_j_clus =  euclideanDistance_2(VectorMatrix[i], Centroids[j]);
+                if(sim_j_clus < similarity){
+                    best_cluster = j;
+                    similarity = sim_j_clus;
+                }
+            }
+            if(best_cluster == -1){
+                for (const auto& elem : VectorMatrix[i]) {
+                    std::cout << elem << " ";
+                }
+                printf("\n");
+                return {{-1}};
+            }
+            printf("best_cluster = %d\n",best_cluster);
+            Clusters_tmp[best_cluster].push_back(VectorMatrix[i]);
+            Clusters_tmp_2[best_cluster].push_back(vecOriginal[i]);
+            Clusters_idx_tmp[best_cluster].push_back(i);
+        }
+        //recompute the centroid
+        bool flag_tmp = false;
+
+        for(int j = 0; j < k_clusters; ++j){
+            auto old_centroid = Centroids[j];
+            auto new_centroid = computeCentroidEuc_2(Clusters_tmp[j]);
+            Centroids[j] = new_centroid;
+            flag_tmp = flag_tmp || !(areVectorsEqual(old_centroid,new_centroid));
+
+        }
+       
+        flag_cluster = flag_tmp;
+        if(!flag_cluster){
+            writeVectorToFile_2(Clusters_tmp);
+            writeVectorToFile(Clusters_tmp_2);
+        }
+        Clusters = Clusters_idx_tmp;
+    }
+
+    return Clusters;
+}
 
 
 //__________________________________________________//
