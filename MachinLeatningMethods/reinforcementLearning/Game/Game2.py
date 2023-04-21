@@ -9,11 +9,11 @@ parent_path = os.path.abspath(os.path.join(os.getcwd(), ".."))
 sys.path.append(parent_path)
 
 # Importa la funzione file_reader dal modulo fileReader
-from .Move import executeInstruction
+from Move import executeInstruction
 
 
 class GameEnvironment(gym.Env):
-    def __init__(self, V,voidMat, max_id, instructions, patterns, num_colors,map_value, n):
+    def __init__(self, V, max_id, instructions, patterns, num_colors, n):
         super().__init__()
         self.observation_space = spaces.Box(low=-2, high=num_colors, shape=(n, n), dtype=np.int)
 
@@ -25,37 +25,26 @@ class GameEnvironment(gym.Env):
             len(patterns)  # pattern_idx
         ])
 
-        self.map_value = map_value
         self.V = V
         self.max_id = max_id
         self.instructions = instructions
         self.patterns = patterns
         self.n = len(V)
-        self.voidMat = voidMat
         self.reset()
 
     def reset(self):
-        self.currentMat = np.copy(self.voidMat)
+        self.currentMat = np.zeros((self.n, self.n), dtype=np.int)
         self.current_id = 0
         self.steps = 0
         return self.currentMat
     
     def execute_instruction(self, action):
         node_i, node_j, instruction, lengthOfInst, pattern = action
-        self.current_id, num_new_colored_cells, self.currentMat = executeInstruction(self.current_id, node_i, node_j, instruction, lengthOfInst, pattern, self.V, self.currentMat, self.map_value)
+        self.current_id, num_new_colored_cells = executeInstruction(self.current_id, node_i, node_j, instruction, lengthOfInst, pattern, self.currentMat, self.V, 0)
         return num_new_colored_cells
         
     def print_current(self):
         print(self.currentMat)
-
-    def print_move(self, action):
-        node_i, node_j, instruction, lengthOfInst, pattern = action
-        print("node:", node_i, node_j, " - instruction:", self.instructions[instruction], " - lenOfInst :", lengthOfInst, " - Pattern :", self.patterns[pattern])
-
-    def print_info_state(self, action):
-        self.print_move(action)
-        self.print_current()
-        print("steps: ", self.steps, " - current id:", self.current_id)
 
     def step(self, action):
         node_i, node_j, instruction_idx, length, pattern_idx = action

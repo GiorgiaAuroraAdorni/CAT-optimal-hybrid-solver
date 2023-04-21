@@ -1,3 +1,6 @@
+import numpy as np
+import copy
+
 class Instruction:
     def __init__(self):
         self.instruction = []
@@ -8,6 +11,8 @@ WRONG_COLOR = -2
 
 def executeInstruction(id, node_i, node_j, instruction_input, lengthOfInst, pattern, mat, actualRes, value_index):
     
+    tmp_input_mat = copy.deepcopy(actualRes)
+
     instruction = instruction_input.copy()
 
     n = len(mat)
@@ -15,9 +20,8 @@ def executeInstruction(id, node_i, node_j, instruction_input, lengthOfInst, patt
     idx_istruct = 0
     i = node_i
     j = node_j
-
     if mat[i][j] == -1:
-        return id,-1
+        return id,-1, tmp_input_mat
     
 
     min_to_color = 0
@@ -49,7 +53,7 @@ def executeInstruction(id, node_i, node_j, instruction_input, lengthOfInst, patt
 
         i += instruction[idx_istruct]
         idx_istruct += 1
-        print(idx_istruct, len(instruction), "\n")
+        #print(idx_istruct, len(instruction), "\n")
         j += instruction[idx_istruct]
         idx_istruct += 1
 
@@ -61,6 +65,10 @@ def executeInstruction(id, node_i, node_j, instruction_input, lengthOfInst, patt
             break
 
         if i >= len(mat) or i < 0 or j >= len(mat) or j < 0 or mat[i][j] == -1:
-            return id, -1
+            actualRes = copy.deepcopy(tmp_input_mat)
+            return id, -1, actualRes
 
-    return id, min_to_color
+    if min_to_color <= 0:
+        actualRes = copy.deepcopy(tmp_input_mat)
+        return id, 0, actualRes
+    return id, min_to_color, actualRes

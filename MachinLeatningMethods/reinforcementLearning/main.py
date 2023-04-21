@@ -8,6 +8,9 @@ from stable_baselines3 import DQN
 from stable_baselines3.dqn import MlpPolicy
 from stable_baselines3.common.env_checker import check_env
 
+from stable_baselines3 import A2C
+
+
 # Crea un agente DQN utilizzando la policy MlpPolicy
 
 # from Machine.custom_agent import MyCustomAgent
@@ -60,39 +63,35 @@ num_instructions = len(instructions)
 num_patterns = len(patterns)
 max_length = 4
 num_actions = num_instructions * num_patterns * max_length
+num_colors = 4
 
+game_env = GameEnvironment(V, voidMat,max_id, instructions, patterns, num_colors, map_value,n)
 
-
-game_env = GameEnvironment(V, max_id, instructions, patterns, 4, n)
 check_env(game_env)
 
-agent = DQN("MlpPolicy", game_env, verbose=1)
 
 # Crea il tuo agente di reinforcement learning (ad esempio, un DQN)
-agent = DQN(MlpPolicy, game_env, verbose=1)
-agent.learn(total_timesteps=1000, log_interval=4)
+# agent = DQN(MlpPolicy, game_env, verbose=1)
+# agent.learn(total_timesteps=1000, log_interval=4)
 
-# Imposta il numero di episodi per l'addestramento
-num_episodes = 1000
+agent = A2C("MlpPolicy", game_env, verbose=1)
+agent.learn(total_timesteps=100000)
 
- 
-# Esegui l'addestramento
+num_episodes = 100
 for episode in range(num_episodes):
     state = game_env.reset()
     done = False
+    episode_reward = 0
 
     while not done:
         # Scegli un'azione utilizzando la politica dell'agente
-        action, _ = agent.predict(state, deterministic=False)
+        action, _ = agent.predict(state, deterministic=True)
 
         # Esegui l'azione nell'ambiente di gioco e ottieni il prossimo stato, il reward e il flag 'done'
         next_state, reward, done, _ = game_env.step(action)
 
-        # Memorizza l'esperienza dell'agente (stato, azione, reward, next_state, done)
-        agent.replay_buffer.add(state, action, reward, next_state, done)
-
-        # Esegui un passo di apprendimento dell'agente
-        agent.learn(total_timesteps=1)
-
-        # Aggiorna lo stato corrente
+        # Aggiorna lo stato corrente e il reward dell'episodio
         state = next_state
+        episode_reward += reward
+
+    print(f"Episode {episode + 1}: Reward = {episode_reward}")
