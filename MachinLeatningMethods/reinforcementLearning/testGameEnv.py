@@ -4,12 +4,20 @@ from Game.Game import GameEnvironment
 from Game.Instruction import *
 from Tools.fileReader import file_reader
 
+
+
+def cerca_array(array_da_cercare, array_di_array):
+    for i, array in enumerate(array_di_array):
+        if array == array_da_cercare:
+            return i
+    return -1
+
 path = "./Graph/TestGraph_6.txt"
 # Inizializza le variabili necessarie per il tuo ambiente di gioco
 V = file_reader(path)
 n = len(V)
 
-instructions = TOT_istructions
+instructions = TOT_istructions_2
 patterns = generate_combinations(4)
 num_colors = 4
 
@@ -46,6 +54,7 @@ game_env = GameEnvironment(V, voidMat,max_id, instructions, patterns, num_colors
 state = game_env.reset()
 #print("Stato iniziale:")
 #print(np.array(state))
+
 
 if 0 :
     tmp_mat = np.copy(voidMat)
@@ -92,6 +101,15 @@ if 1 :
 
     game_env.reset()
     game_env.print_info_state(action)
+
+
+    action = (2, 2, 4, 3, cerca_array([2,1,3,4], game_env.patterns))  # Scegli un'azione valida (node_i, node_j, instruction_idx, length, pattern_idx)
+    next_state, reward, done, _ = game_env.step(action)
+    action = (3, 2, 4, 3, cerca_array([2,1,3,4], game_env.patterns))  # Scegli un'azione valida (node_i, node_j, instruction_idx, length, pattern_idx)
+    next_state, reward, done, _ = game_env.step(action)
+
+    game_env.print_info_state(action)
+    
 
 
 

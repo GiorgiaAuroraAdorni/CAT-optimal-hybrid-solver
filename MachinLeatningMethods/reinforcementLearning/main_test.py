@@ -38,6 +38,7 @@ tmp_iter_val = 0
 voidMat = [[0] * n for _ in range(n)]
 
 print("ciao2\n")
+
 for i in range(n):
     for j in range(n):
         if V[i][j] < 0:
@@ -57,16 +58,10 @@ size = 2**total_colored
 #memory = [-1] * size
 #memory[max_id] = 0 
 
-print("ciao3\n")
 
-instructions = TOT_istructions
-patterns = generate_combinations(4)
+instructions = TOT_istructions_test
+patterns = generate_combinations(3)
 
-
-num_instructions = len(instructions)
-num_patterns = len(patterns)
-max_length = 4
-num_actions = num_instructions * num_patterns * max_length
 num_colors = 4
 
 env = GameEnvironment(V, voidMat,max_id, instructions, patterns, num_colors, map_value,n)
@@ -84,7 +79,7 @@ check_env(env)
 
 env = DummyVecEnv([lambda: env])
 agent = PPO("MlpPolicy", env, verbose=1)
-agent.learn(total_timesteps=10000)
+agent.learn(total_timesteps=100000)
 #agent.learn(total_timesteps=100000, log_interval=100)
 
 
@@ -105,17 +100,21 @@ if 1:
             next_state, reward, done, info = env.step(action)
 
             if info[0]['current_id'] == old_id:
+                print("non det")
                 action, _ = agent.predict(state, deterministic=False)
                 next_state, reward, done, info = env.step(action)
+            else:
+                print("det")
 
-            # print(next_state)
+            #print(next_state)
+            print(f"Step Info: {info}")
+            print(action, "\n")
 
             # Aggiorna lo stato corrente e il reward dell'episodio
             state = next_state
             episode_reward += reward
             step_iter += 1
             old_id = info[0]['current_id']
-            # print(f"Step Info: {info}")
 
 
         print(f"Episode {episode + 1}: Reward = {episode_reward}: Steps = {step_iter}")

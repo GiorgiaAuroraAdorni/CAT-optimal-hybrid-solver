@@ -12,6 +12,7 @@ WRONG_COLOR = -2
 def executeInstruction(id, node_i, node_j, instruction_input, lengthOfInst, pattern, mat, actualRes, value_index):
     
     tmp_input_mat = copy.deepcopy(actualRes)
+    tmp_id_imput = id
 
     instruction = instruction_input.copy()
 
@@ -21,7 +22,7 @@ def executeInstruction(id, node_i, node_j, instruction_input, lengthOfInst, patt
     i = node_i
     j = node_j
     if mat[i][j] == -1:
-        return id,-1, tmp_input_mat
+        return id,0, tmp_input_mat
     
 
     min_to_color = 0
@@ -66,9 +67,9 @@ def executeInstruction(id, node_i, node_j, instruction_input, lengthOfInst, patt
 
         if i >= len(mat) or i < 0 or j >= len(mat) or j < 0 or mat[i][j] == -1:
             actualRes = copy.deepcopy(tmp_input_mat)
-            return id, -1, actualRes
+            return tmp_id_imput, 0, actualRes
 
     if min_to_color <= 0:
         actualRes = copy.deepcopy(tmp_input_mat)
-        return id, 0, actualRes
+        return tmp_id_imput, 0, actualRes
     return id, min_to_color, actualRes
