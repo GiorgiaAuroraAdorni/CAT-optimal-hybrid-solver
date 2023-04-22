@@ -69,7 +69,7 @@ def executeInstruction(id, node_i, node_j, instruction_input, lengthOfInst, patt
             actualRes = copy.deepcopy(tmp_input_mat)
             return tmp_id_imput, 0, actualRes
 
-    if min_to_color <= 0:
-        actualRes = copy.deepcopy(tmp_input_mat)
-        return tmp_id_imput, 0, actualRes
+    #if min_to_color <= 0:
+        #actualRes = copy.deepcopy(tmp_input_mat)
+        #return tmp_id_imput, 0, actualRes
     return id, min_to_color, actualRes

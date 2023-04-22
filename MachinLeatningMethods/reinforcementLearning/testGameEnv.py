@@ -12,7 +12,7 @@ def cerca_array(array_da_cercare, array_di_array):
             return i
     return -1
 
-path = "./Graph/TestGraph_6.txt"
+path = "./Graph/TestGraph_0.txt"
 # Inizializza le variabili necessarie per il tuo ambiente di gioco
 V = file_reader(path)
 n = len(V)
@@ -56,13 +56,24 @@ state = game_env.reset()
 #print(np.array(state))
 
 
-if 0 :
-    tmp_mat = np.copy(voidMat)
-    executeInstruction(0, 3, 3, [0,0,1], 1, [1], V, tmp_mat, map_value)
-    print(tmp_mat)
 
 
 if 1 :
+    
+    action = (2, 0, 4, 2, cerca_array([2,2,1,1], game_env.patterns))  # Scegli un'azione valida (node_i, node_j, instruction_idx, length, pattern_idx)
+    next_state, reward, done, _ = game_env.step(action)
+
+    rew = reward
+    print(rew)
+
+    action = (2, 1, 4, 4, cerca_array([2,2,1,1], game_env.patterns))  # Scegli un'azione valida (node_i, node_j, instruction_idx, length, pattern_idx)
+    next_state, reward, done, _ = game_env.step(action)
+
+    rew += reward
+    print(rew)
+    print(next_state)
+
+if 0 :
     action = (3, 3, 0, 3, 0)  # Scegli un'azione valida (node_i, node_j, instruction_idx, length, pattern_idx)
     next_state, reward, done, _ = game_env.step(action)
     game_env.print_info_state(action)

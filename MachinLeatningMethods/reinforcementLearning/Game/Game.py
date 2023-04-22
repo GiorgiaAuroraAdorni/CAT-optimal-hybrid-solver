@@ -18,6 +18,7 @@ class GameEnvironment(gym.Env):
 
         # ciò che vede il ML
         self.observation_space = spaces.Box(low=-2, high=num_colors, shape=(n, n), dtype=np.int)
+        #self.observation_space = spaces.Box(low=-2, high=num_colors, shape=(2, n, n), dtype=np.int)
 
         # lo spazio dell'azione
         self.action_space = spaces.MultiDiscrete([
@@ -77,7 +78,7 @@ class GameEnvironment(gym.Env):
         # si esegie l'azione e si calcolano i reward 
         # nota c'è una grande penalizzazione se la colorazione avviene fuori dalla board (mossa non valida)
         if self.V[node_i][node_j] == -1:
-            return self.currentMat, -5, self.is_done(),{'current_id': self.current_id}
+            return self.currentMat, -3, self.is_done(),{'current_id': self.current_id}
         
         num_new_colored_cells = self.execute_instruction((node_i, node_j, instruction, length, pattern))
         reward = self.calculate_reward(num_new_colored_cells)
@@ -92,9 +93,9 @@ class GameEnvironment(gym.Env):
     # reward basato su il premiare quanto riesci a colorare valorizzato da quanto presto sei riusito
     # se la colorazione non è avvenuta penalizza (esempio troppi cancellati, colora fuori dalla board)
     def calculate_reward(self, num_new_colored_cells):
-        multiplier = max(2 - self.steps, 1)
-        if num_new_colored_cells == 0:
-            return -1
+        multiplier = max(4 - self.steps, 1)
+        #if num_new_colored_cells == 0:
+        #   return -1
         reward = multiplier * num_new_colored_cells
         return reward
 
