@@ -16,7 +16,7 @@ from stable_baselines3.common.vec_env import DummyVecEnv
 
 
 
-path = "./Graph/TestGraph_0.txt"
+path = "./Graph/TestGraph_TEST.txt"
 V = file_reader(path)
 n = len(V)
 
@@ -56,7 +56,7 @@ env = DummyVecEnv([lambda: env])
 
 # PPO Model
 agent = PPO("MlpPolicy", env, verbose=1)
-agent.learn(total_timesteps=100000)
+agent.learn(total_timesteps=200000)
 
 
 # Test model Perform
@@ -71,25 +71,14 @@ if 1:
         while not done:
 
             action, _ = agent.predict(state, deterministic=True)
-            #print(action)
-
             next_state, reward, done, info = env.step(action)
-            if info[0]['current_id'] == old_id:                         # nel caso il deterministc finisce in un blocco
-                print("non det")
-                action, _ = agent.predict(state, deterministic=False)
-                next_state, reward, done, info = env.step(action)
-            else:
-                print("det")
-
-            #print(next_state)
-            #print(f"Step Info: {info}")
-            #print(action, "\n")
-
-            # Aggiorna lo stato corrente e il reward dell'episodio
             state = next_state
             episode_reward += reward
             step_iter += 1
             old_id = info[0]['current_id']
+
+            if step_iter > 10:
+                break
 
 
         print(f"Episode {episode + 1}: Reward = {episode_reward}: Steps = {step_iter}")

@@ -22,7 +22,7 @@ def executeInstruction(id, node_i, node_j, instruction_input, lengthOfInst, patt
     i = node_i
     j = node_j
     if mat[i][j] == -1:
-        return id,0, tmp_input_mat
+        return id,0, tmp_input_mat, False
     
 
     min_to_color = 0
@@ -67,9 +67,9 @@ def executeInstruction(id, node_i, node_j, instruction_input, lengthOfInst, patt
 
         if i >= len(mat) or i < 0 or j >= len(mat) or j < 0 or mat[i][j] == -1:
             actualRes = copy.deepcopy(tmp_input_mat)
-            return tmp_id_imput, 0, actualRes
+            return tmp_id_imput, 0, actualRes, False
 
     #if min_to_color <= 0:
         #actualRes = copy.deepcopy(tmp_input_mat)
         #return tmp_id_imput, 0, actualRes
-    return id, min_to_color, actualRes
+    return id, min_to_color, actualRes, True
