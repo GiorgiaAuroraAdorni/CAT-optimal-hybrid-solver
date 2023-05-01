@@ -1,4 +1,4 @@
-from Game.Game_train import GameEnvironmentTrain
+from Game.Game_train_CNN import GameEnvironment as GameEnvironmentTrain
 from Game.Instruction import *
 from Tools.fileReader import file_reader
 
@@ -65,8 +65,8 @@ if not os.path.exists(logdir):
     os.makedirs(logdir)
 
 # PPO Model
-agent = PPO("MlpPolicy", env, verbose=1,tensorboard_log=logdir)
-agent.learn(total_timesteps=500000, reset_num_timesteps=False, tb_log_name="PPO")
+agent = PPO("CnnPolicy", env, verbose=1,tensorboard_log=logdir)
+agent.learn(total_timesteps=500000, reset_num_timesteps=False, tb_log_name="PPO_CNN")
 # agent.save("PPO_model_CNN.zip")
 # agent = PPO.load("PPO_model_CNN.zip")
 
