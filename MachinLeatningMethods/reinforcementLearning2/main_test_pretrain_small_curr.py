@@ -93,7 +93,9 @@ new_agent = PPO("MlpPolicy",
             ent_coef=0.01,
             tensorboard_log=logdir)
 
-new_agent.policy.set_weights(agent.policy.get_weights())
+trained_weights = agent.policy.state_dict()
+new_agent.policy.load_state_dict(trained_weights)
+
 new_agent.learn(total_timesteps=500000,  callback=ExplainedVarianceCallback,reset_num_timesteps=False, tb_log_name="entropy_001_2")
 
 agent.save("PPO_model_Pretrain_small_2.zip")
