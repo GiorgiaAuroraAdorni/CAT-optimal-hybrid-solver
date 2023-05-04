@@ -59,7 +59,7 @@ class GameEnvironmentPreTrain(gym.Env):
         super().__init__()
 
         # ciò che vede il ML
-        self.observation_space = spaces.Box(low=-2, high=num_colors, shape=(n * n + n*n,), dtype=np.int)
+        self.observation_space = spaces.Box(low=-2, high=num_colors, shape=(n * n + n*n,), dtype=np.int32)
         #self.observation_space = spaces.Box(low=-2, high=num_colors, shape=(2, n, n), dtype=np.int)
 
         # lo spazio dell'azione
@@ -138,7 +138,7 @@ class GameEnvironmentPreTrain(gym.Env):
     def execute_instruction(self, action):
         node_i, node_j, instruction, lengthOfInst, pattern = action
         self.current_id, num_new_colored_cells, self.currentMat, legit_move = executeInstruction(self.current_id, node_i, node_j, instruction, lengthOfInst, pattern, self.V, self.currentMat, self.map_value)
-        return num_new_colored_cells
+        return num_new_colored_cells,legit_move
     
 
     # Singolo step, che esegue un azione
@@ -155,13 +155,16 @@ class GameEnvironmentPreTrain(gym.Env):
             state = self.get_state()
             return state, -10, False,False, {'current_id': self.current_id}
         
-        num_new_colored_cells = self.execute_instruction((node_i, node_j, instruction, length, pattern))
+        num_new_colored_cells, legit_move = self.execute_instruction((node_i, node_j, instruction, length, pattern))
         reward = self.calculate_reward(num_new_colored_cells,(node_i, node_j, instruction_idx, length, pattern_idx))
         done = self.is_done()
         next_state = np.copy(self.currentMat)
         self.steps += 1
         info = {'current_id': self.current_id}
-
+        if legit_move == False:
+            state = self.get_state()
+            return state, -1, False,False, {'current_id': self.current_id}
+        
         state = self.get_state(state_print=next_state)
         return state, reward, done, False, info
 
@@ -170,7 +173,6 @@ class GameEnvironmentPreTrain(gym.Env):
     # se la colorazione non è avvenuta penalizza (esempio troppi cancellati, colora fuori dalla board)
     def calculate_reward(self, num_new_colored_cells, action):
         node_i, node_j, instruction_idx, length, pattern_idx = action
-        
         return num_new_colored_cells
 
 
