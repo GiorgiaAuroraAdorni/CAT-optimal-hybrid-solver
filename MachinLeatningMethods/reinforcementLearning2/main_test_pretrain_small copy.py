@@ -1,6 +1,4 @@
 from Game.Game_pretrain import GameEnvironmentPreTrain
-from Game.Game_pretrain_2 import GameEnvironmentPreTrain2
-from Game.Game_train import GameEnvironmentTrain as GameEnvironment
 from Game.Instruction import *
 from Tools.fileReader import file_reader
 
@@ -68,33 +66,14 @@ agent = PPO("MlpPolicy",
             n_epochs=30,
             learning_rate=0.0003,
             clip_range=0.15,
-            ent_coef=0.01,
+            ent_coef=0.02,
             tensorboard_log=logdir)
 
 agent = PPO("MlpPolicy", env, verbose=1)
 
-agent.learn(total_timesteps=300000, reset_num_timesteps=False, tb_log_name="entropy_001_1")
+agent.learn(total_timesteps=300000, reset_num_timesteps=False, tb_log_name="entropy_002")
 agent.save("PPO_model_Pretrain_small_1.zip")
-
-
-env2 = GameEnvironmentPreTrain2(boards, voidMat,max_id, instructions, patterns, num_colors, map_value,n)
-check_env(env)
-env2 = DummyVecEnv([lambda: env2])
 agent = PPO.load("PPO_model_Pretrain_small_1.zip")
-agent.set_env(env2)
-agent.learn(total_timesteps=300000, reset_num_timesteps=False, tb_log_name="entropy_001_2")
-agent.save("PPO_model_Pretrain_small_2.zip")
-
-env3 = GameEnvironment(boards, voidMat,max_id, instructions, patterns, num_colors, map_value,n)
-check_env(env3)
-env3 = DummyVecEnv([lambda: env3])
-agent = PPO.load("PPO_model_Pretrain_small_2.zip")
-agent.set_env(env3)
-agent.learn(total_timesteps=500000, reset_num_timesteps=False, tb_log_name="entropy_001_3")
-agent.save("PPO_model_Pretrain_small_3.zip")
-
-
-
 # Test model Perform
 envv = GameEnvironmentPreTrain(boards, voidMat,max_id, instructions, patterns, num_colors, map_value,n)
 

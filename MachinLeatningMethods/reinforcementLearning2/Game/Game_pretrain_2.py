@@ -1,7 +1,7 @@
 import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
-from .Move import executeInstruction
+from .Move_pretrain import executeInstruction
 
 from pylab import *
 import random
@@ -54,13 +54,7 @@ def create_big_matrix(inputMat):
 
 
 
-
-
-
-
-
-
-class GameEnvironmentTrain(gym.Env):
+class GameEnvironmentPreTrain2(gym.Env):
     def __init__(self, boards,voidMat, max_id, instructions, patterns, num_colors,map_value, n):
         super().__init__()
 
@@ -73,7 +67,7 @@ class GameEnvironmentTrain(gym.Env):
             n,                                          # node_i
             n,                                          # node_j
             len(instructions),                          # instruction_idx
-            6,                                          # length della mossa
+            n,                                          # length della mossa
             len(patterns)                               # pattern_idx
         ])
 
@@ -144,7 +138,7 @@ class GameEnvironmentTrain(gym.Env):
     def execute_instruction(self, action):
         node_i, node_j, instruction, lengthOfInst, pattern = action
         self.current_id, num_new_colored_cells, self.currentMat, legit_move = executeInstruction(self.current_id, node_i, node_j, instruction, lengthOfInst, pattern, self.V, self.currentMat, self.map_value)
-        return num_new_colored_cells
+        return num_new_colored_cells,legit_move
     
 
     # Singolo step, che esegue un azione
@@ -152,6 +146,7 @@ class GameEnvironmentTrain(gym.Env):
 
         #come prima cosa si estrapolano le info interessate dall'action
         node_i, node_j, instruction_idx, length, pattern_idx = action
+        length += 1
         instruction = self.instructions[instruction_idx]
         pattern = self.patterns[pattern_idx]
 
@@ -161,14 +156,15 @@ class GameEnvironmentTrain(gym.Env):
             state = self.get_state()
             return state, -1, False,False, {'current_id': self.current_id}
         
-        self.execute_instruction((node_i, node_j, instruction, length, pattern))
+        num_new_colored_cells, legit_move = self.execute_instruction((node_i, node_j, instruction, length, pattern))
+        reward = self.calculate_reward(num_new_colored_cells,action)
         done = self.is_done()
         next_state = np.copy(self.currentMat)
         self.steps += 1
         info = {'current_id': self.current_id}
-
-        if done:
-            reward += 1/self.steps
+        if legit_move == False:
+            state = self.get_state()
+            return state, -0.5, False,False, {'current_id': self.current_id}
 
         state = self.get_state(state_print=next_state)
         return state, reward, done, False, info
@@ -176,16 +172,16 @@ class GameEnvironmentTrain(gym.Env):
 
     # reward basato su il premiare quanto riesci a colorare valorizzato da quanto presto sei riusito
     # se la colorazione non è avvenuta penalizza (esempio troppi cancellati, colora fuori dalla board)
-    def calculate_reward(self, num_new_colored_cells):
-        #multiplier = max(10 - self.steps, 1)
-        #if num_new_colored_cells == 0:
-        #   num_new_colored_cells = -1
-        #reward = multiplier * num_new_colored_cells
-        if num_new_colored_cells <= 0:
-            num_new_colored_cells = -1
-        else:
-            num_new_colored_cells = 1
-        return num_new_colored_cells
+    def calculate_reward(self, num_new_colored_cells, action):
+        node_i, node_j, instruction_idx, length, pattern_idx = action
+
+        instruction = self.instructions[instruction_idx]
+        if self.instructions[0] == 2:
+            length = 4
+
+        if num_new_colored_cells == 0:
+            return -0.3
+        return (num_new_colored_cells)/4 * length/4
 
 
     # controllo se è finito il game, cioè se la board è colorata completamente
