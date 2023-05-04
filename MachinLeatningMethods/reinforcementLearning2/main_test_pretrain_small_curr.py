@@ -1,6 +1,9 @@
 from Game.Game_pretrain import GameEnvironmentPreTrain
+from Game.Game_pretrain_curriculum import GameEnvironmentPreTrainCurriculum
 from Game.Instruction import *
 from Tools.fileReader import file_reader
+
+from Machin.Callback import ExplainedVarianceCallback
 
 import numpy as np
 import gym
@@ -66,14 +69,36 @@ agent = PPO("MlpPolicy",
             n_epochs=30,
             learning_rate=0.0003,
             clip_range=0.15,
-            ent_coef=0.02,
+            ent_coef=0.01,
             tensorboard_log=logdir)
 
 agent = PPO("MlpPolicy", env, verbose=1)
 
-agent.learn(total_timesteps=300000, reset_num_timesteps=False, tb_log_name="entropy_002")
+agent.learn(total_timesteps=300000, reset_num_timesteps=False, tb_log_name="entropy_001_1")
 agent.save("PPO_model_Pretrain_small_1.zip")
+
+
+env2 = GameEnvironmentPreTrainCurriculum(boards, voidMat,max_id, instructions, patterns, num_colors, map_value,n)
+check_env(env)
+env2 = DummyVecEnv([lambda: env2])
 agent = PPO.load("PPO_model_Pretrain_small_1.zip")
+
+new_agent = PPO("MlpPolicy", 
+            env2, verbose=1,
+            n_steps=2048,
+            batch_size=128,
+            n_epochs=30,
+            learning_rate=0.0003,
+            clip_range=0.15,
+            ent_coef=0.01,
+            tensorboard_log=logdir)
+
+new_agent.policy.set_weights(agent.policy.get_weights())
+new_agent.learn(total_timesteps=500000,  callback=ExplainedVarianceCallback,reset_num_timesteps=False, tb_log_name="entropy_001_2")
+
+agent.save("PPO_model_Pretrain_small_2.zip")
+
+
 # Test model Perform
 envv = GameEnvironmentPreTrain(boards, voidMat,max_id, instructions, patterns, num_colors, map_value,n)
 

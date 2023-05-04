@@ -54,7 +54,7 @@ def create_big_matrix(inputMat):
 
 
 
-class GameEnvironmentPreTrain(gym.Env):
+class GameEnvironmentPreTrainCurriculum(gym.Env):
     def __init__(self, boards,voidMat, max_id, instructions, patterns, num_colors,map_value, n):
         super().__init__()
 
