@@ -163,8 +163,8 @@ class GameEnvironmentPreTrain(gym.Env):
         info = {'current_id': self.current_id}
         if legit_move == False:
             state = self.get_state()
-            return state, -1, False,False, {'current_id': self.current_id}
-        
+            return state, -2, False,False, {'current_id': self.current_id}
+
         state = self.get_state(state_print=next_state)
         return state, reward, done, False, info
 
@@ -173,6 +173,8 @@ class GameEnvironmentPreTrain(gym.Env):
     # se la colorazione non è avvenuta penalizza (esempio troppi cancellati, colora fuori dalla board)
     def calculate_reward(self, num_new_colored_cells, action):
         node_i, node_j, instruction_idx, length, pattern_idx = action
+        if num_new_colored_cells == 0:
+            retrun -1
         return num_new_colored_cells
 
 
