@@ -3,7 +3,7 @@ from Game.Game_pretrain_curriculum import GameEnvironmentPreTrainCurriculum
 from Game.Instruction import *
 from Tools.fileReader import file_reader
 
-from Machin.Callback import ExplainedVarianceCallback
+from Machin.Callback import StepsBasedLengthCoeffCallback
 
 import numpy as np
 import gym
@@ -17,7 +17,7 @@ from stable_baselines3 import A2C
 from stable_baselines3 import PPO
 from stable_baselines3.common.vec_env import DummyVecEnv
 
-
+from stable_baselines3.common import logger
 
 paths = ["./Graph/TestGraph_TEST_4COL.txt" ]
 boards = [] 
@@ -96,7 +96,7 @@ new_agent = PPO("MlpPolicy",
 trained_weights = agent.policy.state_dict()
 new_agent.policy.load_state_dict(trained_weights)
 
-callback = ExplainedVarianceCallback(update_threshold=0.9, update_value=0.1, max_length_coeff=1)
+callback = StepsBasedLengthCoeffCallback(update_threshold=0.9, update_value=0.1)
 
 new_agent.learn(total_timesteps=500000, 
                 reset_num_timesteps=False, 
