@@ -16,7 +16,7 @@ from stable_baselines3.common.vec_env import DummyVecEnv
 
 
 
-paths = ["./Graph/TestGraph_TEST.txt" ]
+paths = ["./Graph/TestGraph_TEST_4COL.txt" ]
 boards = [] 
 n = 0
 for path in paths:
@@ -44,7 +44,7 @@ for i in range(total_colored):
     max_id += 2**i
 
 instructions = TOT_istructions_test
-num_colors = 2
+num_colors = 4
 patterns = generate_combinations(num_colors)
 
 
@@ -65,9 +65,7 @@ agent = PPO("MlpPolicy",
 
 agent = PPO("MlpPolicy", env, verbose=1)
 
-agent.learn(total_timesteps=300000)
-agent.save("PPO_model_Pretrain1.zip")
-agent = PPO.load("PPO_model_Pretrain1.zip")
+agent.learn(total_timesteps=500000)
 
 # Test model Perform
 envv = GameEnvironmentPreTrain(boards, voidMat,max_id, instructions, patterns, num_colors, map_value,n)

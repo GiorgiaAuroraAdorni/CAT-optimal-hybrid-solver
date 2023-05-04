@@ -67,7 +67,7 @@ class GameEnvironmentPreTrain(gym.Env):
             n,                                          # node_i
             n,                                          # node_j
             len(instructions),                          # instruction_idx
-            6,                                          # length della mossa
+            n,                                          # length della mossa
             len(patterns)                               # pattern_idx
         ])
 
@@ -146,6 +146,7 @@ class GameEnvironmentPreTrain(gym.Env):
 
         #come prima cosa si estrapolano le info interessate dall'action
         node_i, node_j, instruction_idx, length, pattern_idx = action
+        length += 1
         instruction = self.instructions[instruction_idx]
         pattern = self.patterns[pattern_idx]
 
