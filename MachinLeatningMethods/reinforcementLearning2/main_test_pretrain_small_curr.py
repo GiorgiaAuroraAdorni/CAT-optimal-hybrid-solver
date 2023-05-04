@@ -107,11 +107,11 @@ new_agent.learn(total_timesteps=500000,
                 callback=callback)
 
 
-agent.save("PPO_model_Pretrain_small_2.zip")
+new_agent.save("PPO_model_Pretrain_small_2.zip")
 
 
 # Test model Perform
-envv = GameEnvironmentPreTrain(boards, voidMat,max_id, instructions, patterns, num_colors, map_value,n)
+envv = GameEnvironmentPreTrainCurriculum(boards, voidMat,max_id, instructions, patterns, num_colors, map_value,n)
 
 if 1:
     num_episodes = 1
@@ -123,7 +123,7 @@ if 1:
         old_id = 0
         while not done:
             envv.print_state()
-            action, _ = agent.predict(state, deterministic=True)
+            action, _ = new_agent.predict(state, deterministic=True)
             print(action[0])
             envv.step(action[0])
             
