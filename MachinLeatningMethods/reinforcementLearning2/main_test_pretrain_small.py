@@ -53,15 +53,19 @@ check_env(env)
 env = DummyVecEnv([lambda: env])
 
 
-import os
-logdir = "logs_fake"
 
-if not os.path.exists(logdir):
-    os.makedirs(logdir)
+agent = PPO("MlpPolicy", 
+            env, verbose=1,
+            n_steps=2048,
+            batch_size=128,
+            n_epochs=30,
+            learning_rate=0.0003,
+            clip_range=0.15,
+            ent_coef=0.015)
 
-agent = PPO("MlpPolicy", env, verbose=1,tensorboard_log=logdir)
+agent = PPO("MlpPolicy", env, verbose=1)
 
-agent.learn(total_timesteps=100000, reset_num_timesteps=False, tb_log_name="PPO_Pretrain_1")
+agent.learn(total_timesteps=250000)
 agent.save("PPO_model_Pretrain1.zip")
 agent = PPO.load("PPO_model_Pretrain1.zip")
 

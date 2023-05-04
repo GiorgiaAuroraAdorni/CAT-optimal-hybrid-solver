@@ -153,7 +153,7 @@ class GameEnvironmentPreTrain(gym.Env):
         # nota c'è una grande penalizzazione se la colorazione avviene fuori dalla board (mossa non valida)
         if self.V[node_i][node_j] == -1:
             state = self.get_state()
-            return state, -5, False,False, {'current_id': self.current_id}
+            return state, -1, False,False, {'current_id': self.current_id}
         
         num_new_colored_cells, legit_move = self.execute_instruction((node_i, node_j, instruction, length, pattern))
         reward = self.calculate_reward(num_new_colored_cells,(node_i, node_j, instruction_idx, length, pattern_idx))
@@ -163,7 +163,7 @@ class GameEnvironmentPreTrain(gym.Env):
         info = {'current_id': self.current_id}
         if legit_move == False:
             state = self.get_state()
-            return state, -2, False,False, {'current_id': self.current_id}
+            return state, -0.5, False,False, {'current_id': self.current_id}
 
         state = self.get_state(state_print=next_state)
         return state, reward, done, False, info
@@ -174,8 +174,8 @@ class GameEnvironmentPreTrain(gym.Env):
     def calculate_reward(self, num_new_colored_cells, action):
         node_i, node_j, instruction_idx, length, pattern_idx = action
         if num_new_colored_cells == 0:
-            retrun -1
-        return num_new_colored_cells
+            return -0.3
+        return num_new_colored_cells/4
 
 
     # controllo se è finito il game, cioè se la board è colorata completamente
