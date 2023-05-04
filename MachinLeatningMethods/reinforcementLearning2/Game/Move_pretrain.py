@@ -35,10 +35,6 @@ def executeInstruction(id, node_i, node_j, instruction_input, lengthOfInst, patt
     
 
     while True:
-        if actualRes[i][j] == mat[i][j] and pattern[idx_pattern] != mat[i][j]:  
-            actualRes = copy.deepcopy(tmp_input_mat)
-            return tmp_id_imput, 0, actualRes, False
-
         if actualRes[i][j] != mat[i][j] and pattern[idx_pattern] == mat[i][j]:
             id = id + 2**value_index[i*n+j]
             min_to_color += 1
@@ -46,7 +42,8 @@ def executeInstruction(id, node_i, node_j, instruction_input, lengthOfInst, patt
         if mat[i][j] == pattern[idx_pattern]:
             actualRes[i][j] = pattern[idx_pattern]
         else:
-            actualRes[i][j] = WRONG_COLOR
+            actualRes = copy.deepcopy(tmp_input_mat)
+            return tmp_id_imput, 0, actualRes, False
 
         idx_pattern += 1
         if idx_pattern >= len(pattern):

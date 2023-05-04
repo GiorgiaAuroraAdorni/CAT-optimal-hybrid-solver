@@ -43,20 +43,15 @@ max_id = 0
 for i in range(total_colored):
     max_id += 2**i
 
-instructions = TOT_istructions_test
+instructions = TOT_istructions_2
 num_colors = 4
 patterns = generate_combinations(num_colors)
+
+
 env = GameEnvironmentPreTrain(boards, voidMat,max_id, instructions, patterns, num_colors, map_value,n)
 check_env(env)
 env = DummyVecEnv([lambda: env])
 
-# DQN Model
-# agent = DQN(MlpPolicy, game_env, verbose=1)
-# agent.learn(total_timesteps=100000)
-
-# A2C Model
-#agent = A2C("MlpPolicy", game_env, verbose=1)
-#agent.learn(total_timesteps=100000)
 
 import os
 logdir = "logs"
@@ -64,8 +59,6 @@ logdir = "logs"
 if not os.path.exists(logdir):
     os.makedirs(logdir)
 
-# PPO Model
-#agent = PPO("MlpPolicy", env, verbose=1,tensorboard_log=logdir)
 agent = PPO("MlpPolicy", 
             env, verbose=1,
             n_steps=2048,
@@ -76,7 +69,7 @@ agent = PPO("MlpPolicy",
             ent_coef=0.01,
             tensorboard_log=logdir)
 
-agent.learn(total_timesteps=750000, reset_num_timesteps=False, tb_log_name="PPO_BIG_2")
+agent.learn(total_timesteps=2000000, reset_num_timesteps=False, tb_log_name="PPO_Pretrain_1")
 agent.save("PPO_model_Pretrain1.zip")
 agent = PPO.load("PPO_model_Pretrain1.zip")
 
