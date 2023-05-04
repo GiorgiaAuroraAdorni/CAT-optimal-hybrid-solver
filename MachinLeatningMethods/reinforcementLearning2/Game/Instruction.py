@@ -48,8 +48,6 @@ TOT_istructions_2 = [
 
 def generate_combinations(n):
     result = []
-    # TODO: cambiare qui se si vuole avere mosse con pattern piu grandi di 4
-    for length in range(1, 5):
-        for combination in itertools.product(range(1, n+1), repeat=length):
-            result.append(list(combination))
+    for combination in itertools.product(range(1, n+1), repeat=4):
+        result.append(list(combination))
     return result

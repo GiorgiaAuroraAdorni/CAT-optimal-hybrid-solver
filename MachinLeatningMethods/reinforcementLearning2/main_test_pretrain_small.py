@@ -43,8 +43,8 @@ max_id = 0
 for i in range(total_colored):
     max_id += 2**i
 
-instructions = TOT_istructions_2
-num_colors = 4
+instructions = TOT_istructions_test
+num_colors = 2
 patterns = generate_combinations(num_colors)
 
 
