@@ -53,6 +53,11 @@ check_env(env)
 env = DummyVecEnv([lambda: env])
 
 
+import os
+logdir = "logs_HyperParameter"
+
+if not os.path.exists(logdir):
+    os.makedirs(logdir)
 
 agent = PPO("MlpPolicy", 
             env, verbose=1,
@@ -61,11 +66,12 @@ agent = PPO("MlpPolicy",
             n_epochs=30,
             learning_rate=0.0003,
             clip_range=0.15,
-            ent_coef=0.015)
+            ent_coef=0.01,
+            tensorboard_log=logdir)
 
 agent = PPO("MlpPolicy", env, verbose=1)
 
-agent.learn(total_timesteps=500000)
+agent.learn(total_timesteps=300000, reset_num_timesteps=False, tb_log_name="entropy_0,01")
 
 # Test model Perform
 envv = GameEnvironmentPreTrain(boards, voidMat,max_id, instructions, patterns, num_colors, map_value,n)

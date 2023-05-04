@@ -59,7 +59,7 @@ class GameEnvironmentPreTrain(gym.Env):
         super().__init__()
 
         # ciò che vede il ML
-        self.observation_space = spaces.Box(low=-2, high=num_colors, shape=(n * n + n*n,), dtype=np.int32)
+        self.observation_space = spaces.Box(low=-2, high=num_colors, shape=(n * n + n*n,), dtype=np.int64)
         #self.observation_space = spaces.Box(low=-2, high=num_colors, shape=(2, n, n), dtype=np.int)
 
         # lo spazio dell'azione
