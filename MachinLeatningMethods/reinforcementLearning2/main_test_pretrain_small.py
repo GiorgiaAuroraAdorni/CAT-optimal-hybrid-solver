@@ -65,7 +65,7 @@ agent = PPO("MlpPolicy",
 
 agent = PPO("MlpPolicy", env, verbose=1)
 
-agent.learn(total_timesteps=250000)
+agent.learn(total_timesteps=300000)
 agent.save("PPO_model_Pretrain1.zip")
 agent = PPO.load("PPO_model_Pretrain1.zip")
 
