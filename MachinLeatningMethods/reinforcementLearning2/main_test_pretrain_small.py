@@ -72,7 +72,8 @@ agent = PPO("MlpPolicy",
 agent = PPO("MlpPolicy", env, verbose=1)
 
 agent.learn(total_timesteps=300000, reset_num_timesteps=False, tb_log_name="entropy_0,01")
-
+agent.save("PPO_model_Pretrain_small_1.zip")
+agent = PPO.load("PPO_model_Pretrain_small_1.zip")
 # Test model Perform
 envv = GameEnvironmentPreTrain(boards, voidMat,max_id, instructions, patterns, num_colors, map_value,n)
 
