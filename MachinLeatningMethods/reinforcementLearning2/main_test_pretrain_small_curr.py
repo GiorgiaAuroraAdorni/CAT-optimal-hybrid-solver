@@ -96,7 +96,10 @@ new_agent = PPO("MlpPolicy",
 trained_weights = agent.policy.state_dict()
 new_agent.policy.load_state_dict(trained_weights)
 
-callback = StepsBasedLengthCoeffCallback(update_threshold=0.9, update_value=0.1)
+update_interval = 40000
+update_value = 0.1
+
+callback = StepsBasedLengthCoeffCallback(update_interval, update_value, verbose=1)
 
 new_agent.learn(total_timesteps=500000, 
                 reset_num_timesteps=False, 
