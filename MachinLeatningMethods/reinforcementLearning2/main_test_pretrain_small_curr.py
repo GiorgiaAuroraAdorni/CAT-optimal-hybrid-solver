@@ -80,7 +80,7 @@ if 0:
 
 agent = PPO.load("PPO_model_Pretrain_small_1.zip")
 env2 = GameEnvironmentPreTrainCurriculum(boards, voidMat,max_id, instructions, patterns, num_colors, map_value,n)
-check_env(env)
+check_env(env2)
 env2 = DummyVecEnv([lambda: env2])
 
 new_agent = PPO("MlpPolicy", 
