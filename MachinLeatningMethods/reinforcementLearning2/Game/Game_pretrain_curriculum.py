@@ -180,7 +180,7 @@ class GameEnvironmentPreTrainCurriculum(gym.Env):
         if self.instructions[0] == 2:
             length = 4
 
-        return (num_new_colored_cells/4) * (1+self.length_coeff * (length/4))
+        return (num_new_colored_cells/4) * (1+self.length_coeff * (length/4)) * (1 + self.length_coeff *max((5-self.steps)/10,0))
 
 
     # controllo se è finito il game, cioè se la board è colorata completamente
