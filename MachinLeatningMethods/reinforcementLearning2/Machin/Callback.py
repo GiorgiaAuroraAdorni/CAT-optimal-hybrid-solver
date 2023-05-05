@@ -58,7 +58,7 @@ class StepsBasedLengthCoeffCallback(BaseCallback):
         current_step = self.num_timesteps
 
         if current_step - self.last_update_step >= self.update_interval:
-            self.training_env.envs[0].length_coeff = min(self.training_env.envs[0].length_coeff + self.update_value, 1)
+            self.training_env.envs[0].length_coeff = min(self.training_env.envs[0].length_coeff + self.update_value, 2)
             self.last_update_step = current_step
             if self.verbose > 0:
                 print(f"Step {current_step}: Updated length_coeff to {self.training_env.envs[0].length_coeff}")

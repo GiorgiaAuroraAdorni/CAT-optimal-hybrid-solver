@@ -97,7 +97,7 @@ trained_weights = agent.policy.state_dict()
 new_agent.policy.load_state_dict(trained_weights)
 
 update_interval = 40000
-update_value = 0.1
+update_value = 0.2
 
 callback = StepsBasedLengthCoeffCallback(update_interval, update_value, verbose=1)
 
