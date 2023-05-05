@@ -66,6 +66,7 @@ if not os.path.exists(logdir):
 
 # PPO Model
 #agent = PPO("MlpPolicy", env, verbose=1,tensorboard_log=logdir)
+
 agent = PPO("MlpPolicy", 
             env, verbose=1,
             n_steps=2048,
@@ -74,9 +75,9 @@ agent = PPO("MlpPolicy",
             learning_rate=0.0003,
             clip_range=0.15,
             ent_coef=0.01,
-            
             tensorboard_log=logdir)
-agent.learn(total_timesteps=750000, reset_num_timesteps=False, tb_log_name="PPO_BIG_2")
+
+agent.learn(total_timesteps=2000000, reset_num_timesteps=False, tb_log_name="PPO_BIG_2")
 agent.save("PPO_model_CNN.zip")
 agent = PPO.load("PPO_model_CNN.zip")
 

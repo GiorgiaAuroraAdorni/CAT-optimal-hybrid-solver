@@ -17,7 +17,7 @@ from stable_baselines3.common.vec_env import DummyVecEnv
 
 
 #paths = ["./Graph/TestGraph_TEST1.txt","./Graph/TestGraph_TEST2.txt","./Graph/TestGraph_TEST3.txt","./Graph/TestGraph_TEST4.txt" ]
-paths = ["./Graph/TestGraph_TEST2.txt"]
+paths = ["./Graph/TestGraph_TEST_4COL.txt"]
 
 boards = [] 
 n = 0
@@ -46,13 +46,13 @@ for i in range(total_colored):
     max_id += 2**i
 
 instructions = TOT_istructions_test
-num_colors = 2
+num_colors = 4
 patterns = generate_combinations(num_colors)
 env = GameEnvironmentTrain(boards, voidMat,max_id, instructions, patterns, num_colors, map_value,n)
 check_env(env)
 env = DummyVecEnv([lambda: env])
 
-agent = PPO.load("PPO_model_CNN.zip")
+agent = PPO.load("PPO_model_Pretrain_small_2.zip")
 
 # Test model Perform
 envv = GameEnvironmentTrain(boards, voidMat,max_id, instructions, patterns, num_colors, map_value,n)

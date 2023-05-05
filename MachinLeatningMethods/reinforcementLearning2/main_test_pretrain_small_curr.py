@@ -6,7 +6,7 @@ from Tools.fileReader import file_reader
 from Machin.Callback import StepsBasedLengthCoeffCallback
 
 import numpy as np
-import gym
+from gymnasium import spaces
 
 from stable_baselines3 import DQN
 from stable_baselines3.dqn import MlpPolicy
@@ -78,40 +78,64 @@ if 0:
     agent.learn(total_timesteps=300000, reset_num_timesteps=False, tb_log_name="entropy_001_1")
     agent.save("PPO_model_Pretrain_small_1.zip")
 
-agent = PPO.load("PPO_model_Pretrain_small_1.zip")
+if 0:
+    agent = PPO.load("PPO_model_Pretrain_small_1.zip")
+    env2 = GameEnvironmentPreTrainCurriculum(boards, voidMat,max_id, instructions, patterns, num_colors, map_value,n)
+    check_env(env2)
+    env2 = DummyVecEnv([lambda: env2])
+
+    new_agent = PPO("MlpPolicy", 
+                env2, verbose=1,
+                n_steps=2048,
+                batch_size=128,
+                n_epochs=30,
+                learning_rate=0.0003,
+                clip_range=0.15,
+                ent_coef=0.01,
+                tensorboard_log=logdir)
+
+    trained_weights = agent.policy.state_dict()
+    new_agent.policy.load_state_dict(trained_weights)
+
+    update_interval = 40000
+    update_value = 0.2
+
+    callback = StepsBasedLengthCoeffCallback(update_interval, update_value, verbose=1)
+
+    new_agent.learn(total_timesteps=500000, 
+                    reset_num_timesteps=False, 
+                    tb_log_name="entropy_001_2", 
+                    callback=callback)
+
+
+    new_agent.save("PPO_model_Pretrain_small_2.zip")
+
+
+envv = GameEnvironmentPreTrainCurriculum(boards, voidMat,max_id, instructions, patterns, num_colors, map_value,n)
+
+
 env2 = GameEnvironmentPreTrainCurriculum(boards, voidMat,max_id, instructions, patterns, num_colors, map_value,n)
 check_env(env2)
 env2 = DummyVecEnv([lambda: env2])
 
-new_agent = PPO("MlpPolicy", 
-            env2, verbose=1,
-            n_steps=2048,
-            batch_size=128,
-            n_epochs=30,
-            learning_rate=0.0003,
-            clip_range=0.15,
-            ent_coef=0.01,
-            tensorboard_log=logdir)
+observation_space = spaces.Box(low=-2, high=4, shape=(n * n + n * n,), dtype=np.int64)
 
-trained_weights = agent.policy.state_dict()
-new_agent.policy.load_state_dict(trained_weights)
+action_space = spaces.MultiDiscrete([
+    n,                                          # node_i
+    n,                                          # node_j
+    len(instructions),                          # instruction_idx
+    n,                                          # length della mossa
+    len(patterns)                               # pattern_idx
+])
 
-update_interval = 40000
-update_value = 0.2
+custom_objects = {
+    "observation_space": observation_space,
+    "action_space": action_space,
+}
 
-callback = StepsBasedLengthCoeffCallback(update_interval, update_value, verbose=1)
-
-new_agent.learn(total_timesteps=500000, 
-                reset_num_timesteps=False, 
-                tb_log_name="entropy_001_2", 
-                callback=callback)
-
-
-new_agent.save("PPO_model_Pretrain_small_2.zip")
-
-
+new_agent = PPO.load("PPO_model_Pretrain_small_2.zip", env=env2, custom_objects=custom_objects)
 # Test model Perform
-envv = GameEnvironmentPreTrainCurriculum(boards, voidMat,max_id, instructions, patterns, num_colors, map_value,n)
+print("\n\nC\n\n")
 
 if 1:
     num_episodes = 1
@@ -128,7 +152,7 @@ if 1:
             envv.step(action[0])
             
             #envv.print_info_state(action[0])
-            next_state, reward, done, info = env.step(action)
+            next_state, reward, done, info = env2.step(action)
             state = next_state
             episode_reward += reward
             print(reward)

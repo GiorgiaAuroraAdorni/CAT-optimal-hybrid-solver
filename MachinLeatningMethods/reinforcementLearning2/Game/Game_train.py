@@ -65,7 +65,7 @@ class GameEnvironmentTrain(gym.Env):
         super().__init__()
 
         # ciò che vede il ML
-        self.observation_space = spaces.Box(low=-2, high=num_colors, shape=(n * n + n*n,), dtype=np.int64)
+        self.observation_space = spaces.Box(low=-2, high=num_colors, shape=(n * n + n*n,), dtype=np.int)
         #self.observation_space = spaces.Box(low=-2, high=num_colors, shape=(2, n, n), dtype=np.int)
 
         # lo spazio dell'azione
@@ -73,7 +73,7 @@ class GameEnvironmentTrain(gym.Env):
             n,                                          # node_i
             n,                                          # node_j
             len(instructions),                          # instruction_idx
-            6,                                          # length della mossa
+            4,                                          # length della mossa
             len(patterns)                               # pattern_idx
         ])
 
@@ -159,16 +159,14 @@ class GameEnvironmentTrain(gym.Env):
         # nota c'è una grande penalizzazione se la colorazione avviene fuori dalla board (mossa non valida)
         if self.V[node_i][node_j] == -1:
             state = self.get_state()
-            return state, -1, False,False, {'current_id': self.current_id}
+            return state, -10, False,False, {'current_id': self.current_id}
         
-        self.execute_instruction((node_i, node_j, instruction, length, pattern))
+        num_new_colored_cells = self.execute_instruction((node_i, node_j, instruction, length, pattern))
+        reward = self.calculate_reward(num_new_colored_cells)
         done = self.is_done()
         next_state = np.copy(self.currentMat)
         self.steps += 1
         info = {'current_id': self.current_id}
-
-        if done:
-            reward += 1/self.steps
 
         state = self.get_state(state_print=next_state)
         return state, reward, done, False, info
@@ -177,15 +175,11 @@ class GameEnvironmentTrain(gym.Env):
     # reward basato su il premiare quanto riesci a colorare valorizzato da quanto presto sei riusito
     # se la colorazione non è avvenuta penalizza (esempio troppi cancellati, colora fuori dalla board)
     def calculate_reward(self, num_new_colored_cells):
-        #multiplier = max(10 - self.steps, 1)
-        #if num_new_colored_cells == 0:
-        #   num_new_colored_cells = -1
-        #reward = multiplier * num_new_colored_cells
-        if num_new_colored_cells <= 0:
-            num_new_colored_cells = -1
-        else:
-            num_new_colored_cells = 1
-        return num_new_colored_cells
+        multiplier = max(4 - self.steps, 1)
+        if num_new_colored_cells == 0:
+           num_new_colored_cells = -1
+        reward = multiplier * num_new_colored_cells
+        return reward
 
 
     # controllo se è finito il game, cioè se la board è colorata completamente
