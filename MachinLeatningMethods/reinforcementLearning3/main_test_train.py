@@ -149,8 +149,9 @@ new_agent2 = PPO("MlpPolicy",
 
 trained_weights = new_agent.policy.state_dict()
 new_agent2.policy.load_state_dict(trained_weights)
-new_agent2.learn(total_timesteps=3000000, reset_num_timesteps=False, tb_log_name="PPO_BIG_2")
-new_agent2.save("PPO_model_CNN3.zip")
+# new_agent2.learn(total_timesteps=3000000, reset_num_timesteps=False, tb_log_name="PPO_BIG_2")
+# new_agent2.save("PPO_model_CNN3.zip")
+new_agent2 = PPO.load("PPO_model_CNN3.zip")
 
 # Test model Perform
 envv = GameEnvironmentTrain(boards, voidMat,max_id, instructions, patterns, num_colors, map_value,n)
@@ -158,22 +159,23 @@ envv = GameEnvironmentTrain(boards, voidMat,max_id, instructions, patterns, num_
 if 1:
     num_episodes = 1
     for episode in range(num_episodes):
-        state = env.reset()
+        state = env3.reset()
         done = False
         episode_reward = 0
         step_iter = 0
         old_id = 0
         while not done:
             envv.print_state()
-            action, _ = agent.predict(state, deterministic=True)
+            action, _ = new_agent2.predict(state, deterministic=True)
             print(action[0])
             envv.step(action[0])
             
             #envv.print_info_state(action[0])
-            next_state, reward, done, info = env.step(action)
+            next_state, reward, done, info = env3.step(action)
             state = next_state
             episode_reward += reward
             print(reward)
+            print("state: ",next_state)
             step_iter += 1
             old_id = info[0]['current_id']
 

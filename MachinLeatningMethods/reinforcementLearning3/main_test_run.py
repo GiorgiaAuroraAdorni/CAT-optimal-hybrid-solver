@@ -77,7 +77,7 @@ print(instructions)
 env = GameEnvironmentTrain(boards, voidMat,max_id, instructions, patterns, num_colors, map_value,n)
 check_env(env)
 env = DummyVecEnv([lambda: env])
-agent = PPO.load("PPO_model_CNN.zip")
+agent = PPO.load("PPO_model_CNN3.zip")
 
 # Test model Perform
 envv = GameEnvironmentTrain(boards, voidMat,max_id, instructions, patterns, num_colors, map_value,n)
@@ -98,6 +98,7 @@ if 1:
             envv.step(action[0])
             next_state, reward, done, info = env.step(action)
             state = next_state
+            print(state)
             episode_reward += reward
             print(reward)
             step_iter += 1
