@@ -65,7 +65,7 @@ class GameEnvironmentTrain(gym.Env):
         super().__init__()
 
         # ciò che vede il ML
-        self.observation_space = spaces.Box(low=-2, high=num_colors, shape=(n * n + n*n,), dtype=np.int)
+        self.observation_space = spaces.Box(low=-2, high=num_colors, shape=(n * n + n*n,), dtype=np.int64)
         #self.observation_space = spaces.Box(low=-2, high=num_colors, shape=(2, n, n), dtype=np.int)
 
         # lo spazio dell'azione
@@ -163,6 +163,9 @@ class GameEnvironmentTrain(gym.Env):
         self.steps += 1
         info = {'current_id': self.current_id}
 
+        if done:
+            reward += 10
+            
         state = self.get_state(state_print=next_state)
         return state, reward, done, False, info
 
