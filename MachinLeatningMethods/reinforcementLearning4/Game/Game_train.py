@@ -155,7 +155,7 @@ class GameEnvironmentTrain(gym.Env):
         # nota c'è una grande penalizzazione se la colorazione avviene fuori dalla board (mossa non valida)
         if self.V[node_i][node_j] == -1:
             state = self.get_state()
-            return state, -10, False,False, {'current_id': self.current_id}
+            return state, -2, False,False, {'current_id': self.current_id}
         
         num_new_colored_cells = self.execute_instruction((node_i, node_j, instruction, length, pattern))
         reward = self.calculate_reward(num_new_colored_cells)
@@ -165,8 +165,11 @@ class GameEnvironmentTrain(gym.Env):
         info = {'current_id': self.current_id}
 
         if done:
-            reward += 10
-            
+            reward += 1
+        
+        if length == 4:
+            reward += 1
+
         state = self.get_state(state_print=next_state)
         return state, reward, done, False, info
 
@@ -174,10 +177,10 @@ class GameEnvironmentTrain(gym.Env):
     # reward basato su il premiare quanto riesci a colorare valorizzato da quanto presto sei riusito
     # se la colorazione non è avvenuta penalizza (esempio troppi cancellati, colora fuori dalla board)
     def calculate_reward(self, num_new_colored_cells):
-        multiplier = max(4 - self.steps, 1)
+        multiplier = max(4 - self.steps, 0)
         if num_new_colored_cells == 0:
            num_new_colored_cells = -1
-        reward = multiplier * num_new_colored_cells
+        reward =  num_new_colored_cells/4*(1+ multiplier/10)
         return reward
 
 
