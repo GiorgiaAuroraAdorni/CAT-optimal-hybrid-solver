@@ -77,17 +77,81 @@ print(instructions)
 env = GameEnvironmentTrain(boards, voidMat,max_id, instructions, patterns, num_colors, map_value,n)
 check_env(env)
 env = DummyVecEnv([lambda: env])
-env_2 = GameEnvironmentTrain(boards, voidMat,max_id, instructions, patterns, num_colors, map_value,n)
 
 
+# DQN Model
+# agent = DQN(MlpPolicy, game_env, verbose=1)
+# agent.learn(total_timesteps=100000)
 
-custom_objects = {
-    'action_space': env_2.action_space,
-    'observation_space': env_2.observation_space,
-    'CustomEnv': env_2
-}
+# A2C Model
+#agent = A2C("MlpPolicy", game_env, verbose=1)
+#agent.learn(total_timesteps=100000)
 
-new_agent2 = PPO.load("PPO_model_CNN3.zip", env=env_2,custom_objects=custom_objects)
+import os
+logdir = "logs"
+
+if not os.path.exists(logdir):
+    os.makedirs(logdir)
+
+# PPO Model
+#agent = PPO("MlpPolicy", env, verbose=1,tensorboard_log=logdir)
+
+agent = PPO("MlpPolicy", 
+            env, verbose=1,
+            n_steps=2048,
+            batch_size=128,
+            n_epochs=30,
+            learning_rate=0.0003,
+            clip_range=0.15,
+            ent_coef=0.05,
+            tensorboard_log=logdir)
+
+
+# agent.learn(total_timesteps=3000000, reset_num_timesteps=False, tb_log_name="PPO_BIG_2")
+# agent.save("PPO_model_CNN.zip")
+agent = PPO.load("PPO_model_CNN.zip")
+
+env2 = GameEnvironmentTrain(boards, voidMat,max_id, instructions, patterns, num_colors, map_value,n)
+check_env(env2)
+env2 = DummyVecEnv([lambda: env2])
+
+
+new_agent = PPO("MlpPolicy", 
+            env2, verbose=1,
+            n_steps=2048,
+            batch_size=128,
+            n_epochs=30,
+            learning_rate=0.0003,
+            clip_range=0.15,
+            ent_coef=0.02,
+            tensorboard_log=logdir)
+
+trained_weights = agent.policy.state_dict()
+new_agent.policy.load_state_dict(trained_weights)
+# new_agent.learn(total_timesteps=3000000, reset_num_timesteps=False, tb_log_name="PPO_BIG_2")
+# new_agent.save("PPO_model_CNN2.zip")
+new_agent = PPO.load("PPO_model_CNN2.zip")
+
+env3 = GameEnvironmentTrain(boards, voidMat,max_id, instructions, patterns, num_colors, map_value,n)
+check_env(env3)
+env3 = DummyVecEnv([lambda: env3])
+
+
+new_agent2 = PPO("MlpPolicy", 
+            env3, verbose=1,
+            n_steps=2048,
+            batch_size=128,
+            n_epochs=30,
+            learning_rate=0.0003,
+            clip_range=0.15,
+            ent_coef=0.01,
+            tensorboard_log=logdir)
+
+trained_weights = new_agent.policy.state_dict()
+new_agent2.policy.load_state_dict(trained_weights)
+# new_agent2.learn(total_timesteps=3000000, reset_num_timesteps=False, tb_log_name="PPO_BIG_2")
+# new_agent2.save("PPO_model_CNN3.zip")
+new_agent2 = PPO.load("PPO_model_CNN3.zip")
 
 # Test model Perform
 envv = GameEnvironmentTrain(boards, voidMat,max_id, instructions, patterns, num_colors, map_value,n)
@@ -95,7 +159,7 @@ envv = GameEnvironmentTrain(boards, voidMat,max_id, instructions, patterns, num_
 if 1:
     num_episodes = 1
     for episode in range(num_episodes):
-        state = env.reset()
+        state = env3.reset()
         done = False
         episode_reward = 0
         step_iter = 0
@@ -107,7 +171,7 @@ if 1:
             envv.step(action[0])
             
             #envv.print_info_state(action[0])
-            next_state, reward, done, info = env.step(action)
+            next_state, reward, done, info = env3.step(action)
             state = next_state
             episode_reward += reward
             print(reward)
