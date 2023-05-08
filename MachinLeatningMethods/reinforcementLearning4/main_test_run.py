@@ -102,12 +102,12 @@ if 1:
         old_id = 0
         while not done:
             envv.print_state()
-            action, _ = new_agent2.predict(state, deterministic=True)
+            action, _ = new_agent2.predict(state, deterministic=False)
             print(action[0])
             envv.step(action[0])
-            
-            #envv.print_info_state(action[0])
             next_state, reward, done, info = env.step(action)
+            
+
             state = next_state
             episode_reward += reward
             print(reward)

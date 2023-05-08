@@ -71,6 +71,7 @@ class GameEnvironmentTrain(gym.Env):
         # lo spazio dell'azione
         self.action_space = spaces.MultiDiscrete([
             len(instructions),                          # instruction_idx
+            4,                                          # length della mossa
             len(patterns)                               # pattern_idx
         ])
 
@@ -144,12 +145,11 @@ class GameEnvironmentTrain(gym.Env):
     def step(self, action):
 
         #come prima cosa si estrapolano le info interessate dall'action
-        instruction_idx, pattern_idx = action
+        instruction_idx, length, pattern_idx = action
         instruction_complete = self.instructions[instruction_idx]
         pattern = self.patterns[pattern_idx]
         node_i, node_j = instruction_complete[0]
-        length = instruction_complete[1]
-        instruction = instruction_complete[2]
+        instruction = instruction_complete[1]
 
         # si esegie l'azione e si calcolano i reward 
         # nota c'è una grande penalizzazione se la colorazione avviene fuori dalla board (mossa non valida)
