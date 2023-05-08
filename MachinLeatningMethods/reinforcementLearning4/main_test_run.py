@@ -87,7 +87,7 @@ custom_objects = {
     'CustomEnv': env_2
 }
 
-new_agent2 = PPO.load("PPO_model_CNN2.zip", env=env_2,custom_objects=custom_objects)
+new_agent2 = PPO.load("PPO_model_CNN_2.zip", env=env_2,custom_objects=custom_objects)
 
 # Test model Perform
 envv = GameEnvironmentTrain(boards, voidMat,max_id, instructions, patterns, num_colors, map_value,n)
