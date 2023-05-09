@@ -110,7 +110,7 @@ custom_objects = {
     'CustomEnv': env
 }
 
-agent = PPO.load("PPO_model_CNN_1.zip", env=env,custom_objects=custom_objects)
+agent = PPO.load("PPO_model_CNN_2.zip", env=env,custom_objects=custom_objects)
 
-agent.learn(total_timesteps=2000000, reset_num_timesteps=False, tb_log_name="PPO_BIG_2")
-agent.save("PPO_model_CNN_2.zip")
+agent.learn(total_timesteps=3000000, reset_num_timesteps=False, tb_log_name="PPO_BIG_2")
+agent.save("PPO_model_CNN_3.zip")
