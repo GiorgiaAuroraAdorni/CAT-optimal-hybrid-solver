@@ -157,9 +157,6 @@ class GameEnvironmentTrain(gym.Env):
 
         if done:
             reward += 1
-        
-        if length == 4:
-            reward += 1
 
         state = self.get_state(state_print=next_state)
         return state, reward, done, False, info

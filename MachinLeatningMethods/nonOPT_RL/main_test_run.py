@@ -59,6 +59,8 @@ for inst in range(len(instructions)):
             for k in range(n):
                 patt = checkInstAndgetPatt(i, j, instructions[inst], (k+1), V)
                 if patt:
+                    if i == 0 and j == n-1:
+                        print("ciao")
                     result.append([[i,j],(k+1),instructions[inst],patt])
 
 
@@ -74,25 +76,44 @@ env = GameEnvironmentTrain(boards, voidMat,max_id, instructions, num_colors, map
 check_env(env)
 env = DummyVecEnv([lambda: env])
 
-import os
-logdir = "logs"
+custom_objects = {
+    'action_space': env.action_space,
+    'observation_space': env.observation_space,
+    'CustomEnv': env
+}
 
-if not os.path.exists(logdir):
-    os.makedirs(logdir)
+new_agent2 = PPO.load("PPO_model_MLP.zip", env=env,custom_objects=custom_objects)
 
-# PPO Model
-#agent = PPO("MlpPolicy", env, verbose=1,tensorboard_log=logdir)
+# Test model Perform
+envv = GameEnvironmentTrain(boards, voidMat,max_id, instructions, num_colors, map_value,n)
 
-agent = PPO("MlpPolicy", 
-            env, verbose=1,
-            n_steps=2048,
-            batch_size=128,
-            n_epochs=30,
-            learning_rate=0.0003,
-            clip_range=0.15,
-            ent_coef=0.01,
-            tensorboard_log=logdir)
+if 1:
+    num_episodes = 1
+    for episode in range(num_episodes):
+        state = env.reset()
+        done = False
+        episode_reward = 0
+        step_iter = 0
+        old_id = 0
+        while not done:
+            envv.print_state()
+            action, _ = new_agent2.predict(state, deterministic=True)
+            print(action[0])
+            envv.step(action[0])
+            next_state, reward, done, info = env.step(action)
+            
 
+            state = next_state
+            episode_reward += reward
+            print(reward)
+            print("state: ",next_state)
+            step_iter += 1
+            old_id = info[0]['current_id']
 
-agent.learn(total_timesteps=5000000, reset_num_timesteps=False, tb_log_name="PPO_BIG_2")
-agent.save("PPO_model_MLP.zip")
+            if step_iter > 10:
+                break
+
+        envv.print_state()
+        print(f"Episode {episode + 1}: Reward = {episode_reward}: Steps = {envv.steps}")
+        print("id =", old_id, "real id =", envv.current_id, "max_id = ", max_id)
+        envv.print_state()
