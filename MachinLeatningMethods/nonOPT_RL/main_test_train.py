@@ -94,5 +94,5 @@ agent = PPO("MlpPolicy",
             tensorboard_log=logdir)
 
 
-agent.learn(total_timesteps=15000000, reset_num_timesteps=False, tb_log_name="PPO_BIG_2")
+agent.learn(total_timesteps=5000000, reset_num_timesteps=False, tb_log_name="PPO_BIG_2")
 agent.save("PPO_model_MLP.zip")

@@ -18,7 +18,7 @@ from stable_baselines3.common.vec_env import DummyVecEnv
 import numpy as np
 
 
-paths = ["./Graph/TestGraph_TEST_4COL.txt" ]
+paths = ["./Graph/TestGraph_6.txt" ]
 boards = [] 
 n = 0
 for path in paths:
@@ -45,7 +45,7 @@ max_id = 0
 for i in range(total_colored):
     max_id += 2**i
 
-instructions = TOT_istructions_test
+instructions = TOT_istructions_2
 num_colors = 4
 patterns = generate_combinations(num_colors)
 
