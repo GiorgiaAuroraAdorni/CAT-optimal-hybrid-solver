@@ -18,7 +18,7 @@ from stable_baselines3.common.vec_env import DummyVecEnv
 import numpy as np
 
 
-paths = ["./Graph/TestGraph_TEST_4COL.txt" ]
+paths = ["./Graph/TestGraph_8.txt" ]
 boards = [] 
 n = 0
 for path in paths:
@@ -45,7 +45,7 @@ max_id = 0
 for i in range(total_colored):
     max_id += 2**i
 
-instructions = TOT_istructions_test
+instructions = TOT_istructions_2
 num_colors = 4
 patterns = generate_combinations(num_colors)
 
@@ -70,7 +70,6 @@ print(instructions[0])
 
 env = GameEnvironmentTrain(boards, voidMat,max_id, instructions, num_colors, map_value,n)
 
-
 check_env(env)
 env = DummyVecEnv([lambda: env])
 
@@ -89,8 +88,8 @@ custom_objects = {
     'CustomEnv': env
 }
 
-new_agent2 = PPO.load("PPO_model_CNN3.zip", env=env,custom_objects=custom_objects)
+new_agent2 = PPO.load("PPO_model_MLP_8.zip", env=env,custom_objects=custom_objects)
 
 
 new_agent2.learn(total_timesteps=3000000, reset_num_timesteps=False, tb_log_name="PPO_4_COL")
-new_agent2.save("PPO_model_CNN3.zip")
+new_agent2.save("PPO_model_MLP_8.zip")

@@ -18,7 +18,7 @@ from stable_baselines3.common.vec_env import DummyVecEnv
 import numpy as np
 
 
-paths = ["./Graph/TestGraph_6.txt" ]
+paths = ["./Graph/TestGraph_8.txt" ]
 boards = [] 
 n = 0
 for path in paths:
@@ -95,4 +95,4 @@ agent = PPO("MlpPolicy",
 
 
 agent.learn(total_timesteps=5000000, reset_num_timesteps=False, tb_log_name="PPO_BIG_2")
-agent.save("PPO_model_MLP.zip")
+agent.save("PPO_model_MLP_8.zip")

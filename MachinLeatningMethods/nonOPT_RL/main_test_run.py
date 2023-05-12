@@ -18,7 +18,7 @@ from stable_baselines3.common.vec_env import DummyVecEnv
 import numpy as np
 
 
-paths = ["./Graph/TestGraph_6.txt" ]
+paths = ["./Graph/TestGraph_8.txt" ]
 boards = [] 
 n = 0
 for path in paths:
@@ -82,7 +82,7 @@ custom_objects = {
     'CustomEnv': env
 }
 
-new_agent2 = PPO.load("PPO_model_MLP.zip", env=env,custom_objects=custom_objects)
+new_agent2 = PPO.load("PPO_model_MLP_8.zip", env=env,custom_objects=custom_objects)
 
 # Test model Perform
 envv = GameEnvironmentTrain(boards, voidMat,max_id, instructions, num_colors, map_value,n)
@@ -115,5 +115,5 @@ if 1:
 
         envv.print_state()
         print(f"Episode {episode + 1}: Reward = {episode_reward}: Steps = {envv.steps}")
-        print("id =", old_id, "real id =", envv.current_id, "max_id = ", max_id)
+        print("id =", old_id, "real id =", envv.current_id, "max_id = ", max_id, "Done =", done)
         envv.print_state()
