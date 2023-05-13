@@ -15,9 +15,9 @@ from stable_baselines3 import A2C
 from stable_baselines3 import PPO
 from stable_baselines3.common.vec_env import DummyVecEnv
 
-import numpy as np
 
-paths = ["./Graph/TestGraph_8.txt" ]
+
+paths = ["./Graph/TestGraph_TEST_4COL.txt" ]
 boards = [] 
 n = 0
 for path in paths:
@@ -44,7 +44,7 @@ max_id = 0
 for i in range(total_colored):
     max_id += 2**i
 
-instructions = TOT_istructions_2
+instructions = TOT_istructions_test
 num_colors = 4
 patterns = generate_combinations(num_colors)
 
@@ -55,20 +55,25 @@ result = []
 for inst in range(len(instructions)):
     for i in range(n):
         for j in range(n):
-            for k in range(n):
-                patt = checkInstAndgetPatt(i, j, instructions[inst], (k+1), V)
-                if patt:
-                    result.append([[i,j],(k+1),instructions[inst],patt])
+            flag_valid = executeInstruction(i, j, instructions[inst], 1, V)
+            if flag_valid:
+                result.append([[i,j],instructions[inst]])
 
 
 
         
+
+#for i in range(len(TOT_istructions_test)):
+#    current_combinations = list(itertools.product(TOT_position_test[i], [TOT_istructions_test[i]]))
+#    result.extend(current_combinations)
+
 instructions = result
-print(len(instructions))
-print(instructions[0])
 
-env = GameEnvironmentTrain(boards, voidMat,max_id, instructions, num_colors, map_value,n)
 
+
+
+
+env = GameEnvironmentTrain(boards, voidMat,max_id, instructions, patterns, num_colors, map_value,n)
 check_env(env)
 env = DummyVecEnv([lambda: env])
 
@@ -81,14 +86,16 @@ if not os.path.exists(logdir):
 # PPO Model
 #agent = PPO("MlpPolicy", env, verbose=1,tensorboard_log=logdir)
 
-custom_objects = {
-    'action_space': env.action_space,
-    'observation_space': env.observation_space,
-    'CustomEnv': env
-}
+agent = PPO("MlpPolicy", 
+            env, verbose=1,
+            n_steps=2048,
+            batch_size=128,
+            n_epochs=30,
+            learning_rate=0.0003,
+            clip_range=0.15,
+            ent_coef=0.01,
+            tensorboard_log=logdir)
 
-new_agent2 = PPO.load("PPO_model_MLP_8.zip", env=env,custom_objects=custom_objects)
 
-
-new_agent2.learn(total_timesteps=3000000, reset_num_timesteps=False, tb_log_name="PPO_4_COL")
-new_agent2.save("PPO_model_MLP_8.zip")
+agent.learn(total_timesteps=1500000, reset_num_timesteps=False, tb_log_name="PPO_BIG_2")
+agent.save("PPO_model_CNN2.zip")

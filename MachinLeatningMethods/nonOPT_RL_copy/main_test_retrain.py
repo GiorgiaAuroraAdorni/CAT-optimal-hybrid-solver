@@ -17,6 +17,7 @@ from stable_baselines3.common.vec_env import DummyVecEnv
 
 import numpy as np
 
+
 paths = ["./Graph/TestGraph_8.txt" ]
 boards = [] 
 n = 0

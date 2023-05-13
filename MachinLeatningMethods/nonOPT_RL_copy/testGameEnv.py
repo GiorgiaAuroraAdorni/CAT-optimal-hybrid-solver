@@ -4,20 +4,9 @@ from Tools.fileReader import file_reader
 from Game.Move_checkValidPOsition import *
 
 import numpy as np
-import gym
 
-from stable_baselines3 import DQN
-from stable_baselines3.dqn import MlpPolicy
-from stable_baselines3.common.env_checker import check_env
 
-from stable_baselines3 import A2C
-
-from stable_baselines3 import PPO
-from stable_baselines3.common.vec_env import DummyVecEnv
-
-import numpy as np
-
-paths = ["./Graph/TestGraph_8.txt" ]
+paths = ["./Graph/TestGraph_TEST_4COL.txt" ]
 boards = [] 
 n = 0
 for path in paths:
@@ -44,7 +33,7 @@ max_id = 0
 for i in range(total_colored):
     max_id += 2**i
 
-instructions = TOT_istructions_2
+instructions = TOT_istructions_test
 num_colors = 4
 patterns = generate_combinations(num_colors)
 
@@ -69,26 +58,12 @@ print(instructions[0])
 
 env = GameEnvironmentTrain(boards, voidMat,max_id, instructions, num_colors, map_value,n)
 
-check_env(env)
-env = DummyVecEnv([lambda: env])
 
-import os
-logdir = "logs"
+action = (45) # Scegli un'azione valida (node_i, node_j, instruction_idx, length, pattern_idx)
+next_state, reward, done, _, _ = env.step(action)
+rew = reward
+env.print_state()
 
-if not os.path.exists(logdir):
-    os.makedirs(logdir)
+env.reset()
 
-# PPO Model
-#agent = PPO("MlpPolicy", env, verbose=1,tensorboard_log=logdir)
-
-custom_objects = {
-    'action_space': env.action_space,
-    'observation_space': env.observation_space,
-    'CustomEnv': env
-}
-
-new_agent2 = PPO.load("PPO_model_MLP_8.zip", env=env,custom_objects=custom_objects)
-
-
-new_agent2.learn(total_timesteps=3000000, reset_num_timesteps=False, tb_log_name="PPO_4_COL")
-new_agent2.save("PPO_model_MLP_8.zip")
+# python3 -m tensorboard.main --logdir logs --load_fast=false

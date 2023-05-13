@@ -17,6 +17,7 @@ from stable_baselines3.common.vec_env import DummyVecEnv
 
 import numpy as np
 
+
 paths = ["./Graph/TestGraph_8.txt" ]
 boards = [] 
 n = 0
@@ -58,6 +59,8 @@ for inst in range(len(instructions)):
             for k in range(n):
                 patt = checkInstAndgetPatt(i, j, instructions[inst], (k+1), V)
                 if patt:
+                    if i == 0 and j == n-1:
+                        print("ciao")
                     result.append([[i,j],(k+1),instructions[inst],patt])
 
 
@@ -69,17 +72,9 @@ print(instructions[0])
 
 env = GameEnvironmentTrain(boards, voidMat,max_id, instructions, num_colors, map_value,n)
 
+
 check_env(env)
 env = DummyVecEnv([lambda: env])
-
-import os
-logdir = "logs"
-
-if not os.path.exists(logdir):
-    os.makedirs(logdir)
-
-# PPO Model
-#agent = PPO("MlpPolicy", env, verbose=1,tensorboard_log=logdir)
 
 custom_objects = {
     'action_space': env.action_space,
@@ -89,6 +84,36 @@ custom_objects = {
 
 new_agent2 = PPO.load("PPO_model_MLP_8.zip", env=env,custom_objects=custom_objects)
 
+# Test model Perform
+envv = GameEnvironmentTrain(boards, voidMat,max_id, instructions, num_colors, map_value,n)
 
-new_agent2.learn(total_timesteps=3000000, reset_num_timesteps=False, tb_log_name="PPO_4_COL")
-new_agent2.save("PPO_model_MLP_8.zip")
+if 1:
+    num_episodes = 1
+    for episode in range(num_episodes):
+        state = env.reset()
+        done = False
+        episode_reward = 0
+        step_iter = 0
+        old_id = 0
+        while not done:
+            envv.print_state()
+            action, _ = new_agent2.predict(state, deterministic=True)
+            print(action[0])
+            envv.step(action[0])
+            next_state, reward, done, info = env.step(action)
+            
+
+            state = next_state
+            episode_reward += reward
+            print(reward)
+            print("state: ",next_state)
+            step_iter += 1
+            old_id = info[0]['current_id']
+
+            if step_iter > 10:
+                break
+
+        envv.print_state()
+        print(f"Episode {episode + 1}: Reward = {episode_reward}: Steps = {envv.steps}")
+        print("id =", old_id, "real id =", envv.current_id, "max_id = ", max_id, "Done =", done)
+        envv.print_state()
