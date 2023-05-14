@@ -17,7 +17,6 @@ from stable_baselines3.common.vec_env import DummyVecEnv
 
 import numpy as np
 
-
 paths = ["./Graph/TestGraph_8.txt" ]
 boards = [] 
 n = 0
@@ -70,11 +69,6 @@ print(instructions[0])
 
 env = GameEnvironmentTrain(boards, voidMat,max_id, instructions, num_colors, map_value,n)
 
-
-# num_envs = 16
-# env = SubprocVecEnv([GameEnvironmentTrain(boards, voidMat,max_id, instructions, num_colors, map_value,n) for _ in range(num_envs)])
-
-
 check_env(env)
 env = DummyVecEnv([lambda: env])
 
@@ -87,16 +81,14 @@ if not os.path.exists(logdir):
 # PPO Model
 #agent = PPO("MlpPolicy", env, verbose=1,tensorboard_log=logdir)
 
-agent = PPO("MlpPolicy", 
-            env, verbose=1,
-            n_steps=2048,
-            batch_size=128,
-            n_epochs=30,
-            learning_rate=0.0003,
-            clip_range=0.15,
-            ent_coef=0.01,
-            tensorboard_log=logdir)
+custom_objects = {
+    'action_space': env.action_space,
+    'observation_space': env.observation_space,
+    'CustomEnv': env
+}
+
+new_agent2 = PPO.load("PPO_model_MLP_8.zip", env=env,custom_objects=custom_objects)
 
 
-agent.learn(total_timesteps=5000000, reset_num_timesteps=False, tb_log_name="PPO_BIG_2")
-agent.save("PPO_model_MLP_8.zip")
+new_agent2.learn(total_timesteps=3000000, reset_num_timesteps=False, tb_log_name="PPO_4_COL")
+new_agent2.save("PPO_model_MLP_8.zip")
