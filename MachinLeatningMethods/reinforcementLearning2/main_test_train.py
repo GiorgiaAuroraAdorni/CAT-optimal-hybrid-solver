@@ -77,7 +77,7 @@ agent = PPO("MlpPolicy",
             ent_coef=0.01,
             tensorboard_log=logdir)
 
-agent.learn(total_timesteps=2000000, reset_num_timesteps=False, tb_log_name="PPO_BIG_2")
+agent.learn(total_timesteps=2000000, reset_num_timesteps=False, tb_log_name="PPO_BIG_1")
 agent.save("PPO_model_CNN.zip")
 agent = PPO.load("PPO_model_CNN.zip")
 
