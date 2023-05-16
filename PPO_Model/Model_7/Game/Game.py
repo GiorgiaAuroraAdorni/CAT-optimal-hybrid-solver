@@ -112,13 +112,23 @@ class GameEnvironmentTrain(gym.Env):
         random.seed(os.getpid() + int(time.time()))
         rand_num = random.random()
 
+        block_max = 2
         while rand_num > 0.33:                              # random move 
             random.seed(os.getpid() + int(time.time()))
             rm_action = random.randint(0, len(self.instructions) - 1)
-            self.step(rm_action)
+
+            state, reward, done, legal, info  = self.step(rm_action)
+            
+            if done:
+                break
+
             random.seed(self.current_id + int(time.time()))
             rand_num = random.random()
+            block_max -= 1
+            if block_max == 0:
+                break
         
+
 
         state = self.get_state()
         return state, {}                   
