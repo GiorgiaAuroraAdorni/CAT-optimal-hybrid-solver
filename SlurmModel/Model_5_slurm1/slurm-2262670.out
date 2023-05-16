@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/home/corecco/Model_1/./train_Model.py", line 1, in <module>
+    from Tools.setup_enviroment import *
+  File "/home/corecco/Model_1/Tools/setup_enviroment.py", line 2, in <module>
+    from Game.ValidationMove import *
+  File "/home/corecco/Model_1/Game/ValidationMove.py", line 1, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
