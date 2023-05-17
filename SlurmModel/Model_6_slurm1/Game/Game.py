@@ -109,15 +109,18 @@ class GameEnvironmentTrain(gym.Env):
         rdm_idx = random.randint(0, len(self.boards) - 1)
         self.V = self.boards[rdm_idx]                   # è la board completa da riprodurre
 
-        random.seed(os.getpid() + int(time.time()))
+        random.seed(4554)
         rand_num = random.random()
-
-        while rand_num > 0.75:                              # random move 
+        break_random = 2
+        while rand_num > 100:                              # random move 
             random.seed(os.getpid() + int(time.time()))
             rm_action = random.randint(0, len(self.instructions) - 1)
-            self.step(rm_action)
+            state, reward, done, asd , info = self.step(rm_action)
             random.seed(self.current_id + int(time.time()))
             rand_num = random.random()
+            break_random -=1
+            if break_random == 0:
+                break
         
 
         state = self.get_state()
@@ -170,7 +173,7 @@ class GameEnvironmentTrain(gym.Env):
         next_state = np.copy(self.currentMat)
         self.steps += 1
         info = {'current_id': self.current_id}
-        print("rew: ",reward)
+        print("rew:", reward)
         if done:
             reward += max(1, 10 - self.steps)
 

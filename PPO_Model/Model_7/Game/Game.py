@@ -6,6 +6,8 @@ from pylab import *
 import random
 import time
 import os
+import math
+
 # ___________________________________
 # ___________________________________
 # Function to print the enviroment
@@ -69,7 +71,7 @@ def create_big_matrix(inputMat):
 
 
 class GameEnvironmentTrain(gym.Env):
-    def __init__(self, boards,voidMat, max_id, instructions, num_colors,map_value, n):
+    def __init__(self, boards,voidMat, max_id, instructions, num_colors,map_value, n,seed):
         super().__init__()
 
         # ciò che vede il ML
@@ -88,6 +90,7 @@ class GameEnvironmentTrain(gym.Env):
         self.n = len(self.V)                            # dimensione V in R^{nxn}
         self.voidMat = voidMat                          # la board vuota (con anche gli spazi di fuori board)
         self.old_action = (-1, -1,-1,-1,-1)             # old action
+        self.seed = seed
         self.reset()                                    # inizializzare l'id, la current board e gli steps
     
     def get_state(self, state_print=None):
@@ -109,42 +112,40 @@ class GameEnvironmentTrain(gym.Env):
         rdm_idx = random.randint(0, len(self.boards) - 1)
         self.V = self.boards[rdm_idx]                   # è la board completa da riprodurre
 
-        random.seed(os.getpid() + int(time.time()))
-        rand_num = random.random()
-
-        block_max = 2
-        while rand_num > 0.33:                              # random move 
-            random.seed(os.getpid() + int(time.time()))
-            rm_action = random.randint(0, len(self.instructions) - 1)
-
-            state, reward, done, legal, info  = self.step(rm_action)
-            
+        random.seed(seed)
+        random_col = random.random()
+        if random_col > 0.5 and random_col <= 0.75:
+            inst_random = random.randint(4,len(self.instructions))
+            a, b, done, c, d = self.step(inst_random)
             if done:
-                break
-
-            random.seed(self.current_id + int(time.time()))
-            rand_num = random.random()
-            block_max -= 1
-            if block_max == 0:
-                break
-        
+                self.currentMat = np.copy(self.voidMat)
+                self.current_id = 0
+        elif random_col > 0.75 and random_col <= 0.9:
+            self.random_update()
+            
+        elif random_col > 0.9:
+            i = random.randint(0, self.n-1)
+            j = random.randint(0, self.n-1)
+            if self.currentMat[i][j] == 0:
+                self.currentMat = self.V
+                self.currentMat[0][2] = 0
+                self.current_id = self.max_id - math.pow(2, self.map_value[i*self.n+j])
 
 
         state = self.get_state()
-        return state, {}                   
-        
-    # funzioni di debugg: Printa la board
-    def print_current(self):
-        print(self.currentMat)
-
-    # funzioni di debugg: Printa la mossa
-    def print_move(self, action):
-        instruction, lengthOfInst, pattern = action
-        print("node:", instruction[0], " - instruction:", self.instructions[instruction[1]], " - lenOfInst :", lengthOfInst, " - Pattern :", self.patterns[pattern])
+        return state, {}   
+                    
+    def random_update(self):
+        n = len(self.currentMat)
+        r = random.random()  # genera un numero a random tra 0 e 1
+        for i in range(n):
+            for j in range(n):
+                if random.random() > r:  # genera un altro numero a random e lo confronta con r
+                    self.currentMat[i][j] = self.V[i][j]
+                    self.current_id += math.pow(2, self.map_value[i*n+j])
 
     # funzioni di debugg: Printa tutte le info possibili
     def print_info_state(self, action):
-        self.print_move(action)
         self.print_current()
         print("steps: ", self.steps, " - current id:", self.current_id)
     

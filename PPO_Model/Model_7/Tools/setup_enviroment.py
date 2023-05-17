@@ -17,7 +17,7 @@ def correctPatt(patt):
         patt.append(patt[idx])
     return patt
 
-def getEnviroment(filename):
+def getEnviroment(filename, seed):
     paths = [filename]
     boards = []
     n = 0
@@ -77,8 +77,7 @@ def getEnviroment(filename):
                                         node.append([a,b])
                         result.append([node,(k+1),instructions[inst],patt])
 
-    print(result)
     
     instructions = result
-    env = GameEnvironmentTrain(boards, voidMat,max_id, instructions, num_colors, map_value,n)
+    env = GameEnvironmentTrain(boards, voidMat,max_id, instructions, num_colors, map_value,n,seed)
     return env
