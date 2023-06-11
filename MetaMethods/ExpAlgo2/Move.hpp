@@ -650,10 +650,8 @@ std::pair<int, std::vector<std::vector<int>>> getMirrorVeritcalLeft(int old_id,s
             if(currMat[i][j] == -1 || resMat[i][m-j] == -1){
                 continue;
             }
-            if(resMat[i][m-j] == currMat[i][j]){
-                if(currMat[i][m-j] == 0 || currMat[i][m-j] == WRONG_COLOR){
-                    new_id += std::pow(2,value_index[i*n+(m-j)]);
-                }
+            if(resMat[i][m-j] == currMat[i][j] && currMat[i][m-j] == 0 ){
+                new_id += std::pow(2,value_index[i*n+(m-j)]);
                 currMat[i][m-j] = currMat[i][j];
                 res.push_back({i,j});
             }
@@ -673,10 +671,8 @@ std::pair<int, std::vector<std::vector<int>>> getMirrorVeritcalRig(int old_id,st
             if(resMat[i][j] == -1 || currMat[i][m-j] == -1){
                 continue;
             }
-            if(resMat[i][j] == currMat[i][m-j]){
-                if(currMat[i][j] == 0 || currMat[i][j] == WRONG_COLOR){
-                    new_id += std::pow(2,value_index[i*n+j]);
-                }
+            if(resMat[i][j] == currMat[i][m-j] && currMat[i][j] == 0){
+                new_id += std::pow(2,value_index[i*n+j]);
                 currMat[i][j] = currMat[i][m-j];
                 res.push_back({i,(m-j)});
             }
@@ -696,10 +692,8 @@ std::pair<int, std::vector<std::vector<int>>> getMirrorHorizontalTop(int old_id,
             if(currMat[i][j] == -1 || resMat[m-i][j] == -1){
                 continue;
             }
-            if(resMat[m-i][j] == currMat[i][j]){
-                if(currMat[m-i][j] == 0 || currMat[m-i][j] == WRONG_COLOR){
-                    new_id += std::pow(2,value_index[(m-i)*n+j]);
-                }
+            if(resMat[m-i][j] == currMat[i][j]  &&  currMat[m-i][j] == 0 ){
+                new_id += std::pow(2,value_index[(m-i)*n+j]);
                 currMat[m-i][j] = currMat[i][j];
                 res.push_back({i,j});
             }
@@ -720,10 +714,8 @@ std::pair<int, std::vector<std::vector<int>>> getMirrorHorizontalDown(int old_id
             if(resMat[i][j] == -1 || currMat[m-i][j] == -1){
                 continue;
             }
-            if(currMat[m-i][j] == resMat[i][j]){
-                if(currMat[i][j] == 0 || currMat[i][j] == WRONG_COLOR){
-                    new_id += std::pow(2,value_index[i*n+j]);
-                }
+            if(currMat[m-i][j] == resMat[i][j] &&  currMat[i][j] == 0){
+                new_id += std::pow(2,value_index[i*n+j]);
                 currMat[i][j] = currMat[m-i][j];
                 res.push_back({(m-i),j});
             }
