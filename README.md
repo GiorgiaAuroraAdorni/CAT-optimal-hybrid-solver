@@ -1,5 +1,4 @@
-# CAT_BFS
-Cross Array Task Breadth-First Search
+# CAT Optimal Hybrid Solver
 
 ## Run Program
 * cd ExactMethods/BreadthFirstSearch/
