@@ -1,5 +1,7 @@
 # CAT Optimal Hybrid Solver
 
+[![DOI](https://zenodo.org/badge/605107045.svg)](https://zenodo.org/badge/latestdoi/605107045)
+
 ## Run Program
 * cd ExactMethods/BreadthFirstSearch/
 * clang++ -std=c++11 -stdlib=libc++ -g BfsAlgo.cpp -o bfs
